@@ -1,0 +1,7 @@
+---
+cert_location: /etc/pki/ca-trust/source/anchors
+cert_update_command: update-ca-trust
+packages:
+  - gpg
+  - epel-release
+update_timezone_command: timedatectl set-timezone America/Los_Angeles

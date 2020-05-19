@@ -1,0 +1,12 @@
+- name: update everything, except for filesystem
+  dnf:
+    name: '*'
+    state: latest
+    update_cache: yes
+    exclude: filesystem*
+  when: ansible_distribution == 'CentOS'
+
+- name: update everything (alpine)
+  apk:
+    upgrade: yes
+  when: ansible_distribution == 'Alpine'

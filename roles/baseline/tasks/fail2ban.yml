@@ -1,0 +1,37 @@
+---
+- name: install fail2ban and sendmail
+  package:
+    name:
+      - fail2ban
+      - sendmail
+    state: present
+
+# At some point, this should be resolved...
+- name: manually install whois
+  package:
+    name:
+      - "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/Packages/whois-nls-5.5.1-2.el8.noarch.rpm"
+      - "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/Packages/whois-5.5.1-2.el8.x86_64.rpm"
+    state: present
+  when: (ansible_distribution != 'CentOS')
+
+- name: get IP of controller
+  uri:
+    url: http://ifconfig.me/ip
+    return_content: yes
+  register: ip_response
+  connection: local
+
+- name: copy fail2ban config
+  template:
+    src: fail2ban.jail.local.j2
+    dest: /etc/fail2ban/jail.local
+
+- name: start/enable fail2ban/sendmail
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+    enabled: yes
+  loop:
+    - fail2ban
+    - sendmail

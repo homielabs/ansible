@@ -1,0 +1,13 @@
+---
+- name: Master Playbook
+  hosts: all
+  become: yes
+  roles:
+    # - baseline
+    # - docker
+    # - duo
+    # - bitwarden
+    # - letsencrypt
+  handlers:
+    - import_tasks: roles/caddy/handlers/main.yml
+    - import_tasks: roles/firewalld/handlers/main.yml

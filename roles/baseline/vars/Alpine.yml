@@ -1,0 +1,10 @@
+---
+cert_location: /usr/local/share/ca-certificates
+cert_update_command: update-ca-certificates
+packages:
+  - gnupg
+  - tzdata
+update_timezone_command: |
+  cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
+  echo "America/Los_Angeles" > /etc/timezone
+  apk del tzdata

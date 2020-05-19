@@ -1,0 +1,31 @@
+---
+- name: restart caddy
+  service:
+    name: caddy
+    state: restarted
+    enabled: true
+  listen: "restart reverse proxy"
+
+- name: setup caddy config
+  template:
+    src: "{{ service }}.caddy.j2"
+    dest: /etc/caddy/{{ service }}
+  listen: "setup reverse proxy config"
+
+- name: enable caddy config
+  file:
+    src: /etc/caddy/sites-available/{{ service }}.j2
+    dest: /etc/caddy/sites-enabled/{{ service }}
+    state: link
+  listen: "enable reverse proxy config"
+  notify:
+    - restart reverse proxy
+
+- name: disable caddy config
+  file:
+    src: /etc/caddy/sites-available/{{ service }}.j2
+    dest: /etc/caddy/sites-enabled/{{ service }}
+    state: absent
+  listen: "disable reverse proxy config"
+  notify:
+    - restart reverse proxy

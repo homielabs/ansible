@@ -1,0 +1,31 @@
+---
+- name: restart nginx
+  service:
+    name: nginx
+    state: restarted
+    enabled: true
+  listen: "restart reverse proxy"
+
+- name: setup nginx config
+  template:
+    src: "{{ service }}.nginx.j2"
+    dest: /etc/nginx/sites-available/{{ service }}.j2
+  listen: "setup reverse proxy config"
+
+- name: enable nginx config
+  file:
+    src: /etc/nginx/sites-available/{{ service }}.j2
+    dest: /etc/nginx/sites-enabled/{{ service }}.j2
+    state: link
+  listen: "enable reverse proxy config"
+  notify:
+    - restart reverse proxy
+
+- name: disable nginx config
+  file:
+    src: /etc/nginx/sites-available/{{ service }}.j2
+    dest: /etc/nginx/sites-enabled/{{ service }}.j2
+    state: absent
+  listen: "disable reverse proxy config"
+  notify:
+    - restart reverse proxy

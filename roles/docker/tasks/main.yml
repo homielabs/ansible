@@ -1,0 +1,21 @@
+---
+- name: import variables
+  include_vars: "{{ ansible_distribution }}.yml"
+
+- name: install docker/podman
+  package:
+    name: "{{ package }}"
+    state: latest
+
+- name: install Docker SDK for Python
+  pip:
+    name: docker
+    state: latest
+  when: (ansible_distribution != 'CentOS') and (lookup('env', 'container') != 'docker')
+
+- name: enable/start docker service
+  service:
+    name: docker
+    state: started
+    enabled: yes
+  when: (ansible_distribution != 'CentOS') and (lookup('env', 'container') != 'docker')

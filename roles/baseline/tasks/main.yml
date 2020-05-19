@@ -1,0 +1,85 @@
+---
+- name: import distro variables
+  include_vars: "{{ ansible_distribution }}.yml"
+
+- name: install baseline packages
+  package:
+    name:
+      - vim
+      - openssh-server
+      - expect
+      - net-tools
+      - man
+      - git
+      - chrony
+    state: present
+
+- name: distro specific packages
+  package:
+    name: "{{ packages }}"
+
+- name: updates
+  include: update_unix.yml
+
+# Keys/certs
+
+- name: copy local root CA
+  copy:
+    src: "local.root.pem"
+    dest: "{{ cert_location }}"
+
+- name: Add local root CA to trust
+  command: "{{ cert_update_command }}"
+
+# config
+
+- name: set locale
+  command: localectl set-locale LANG=en_US.utf8
+  when: (ansible_distribution == 'CentOS') and (lookup('env', 'container') != 'docker')
+
+- name: set timezone
+  shell: "{{ update_timezone_command }}"
+  when: (lookup('env', 'container') != 'docker')
+
+- name: copy config
+  copy:
+    src: "{{ item }}"
+    dest: ~/{{ item }}
+  loop:
+    - ".vimrc"
+    - ".gitconfig"
+    - ".bashrc"
+
+# Services
+
+- name: enable sshd on boot
+  service:
+    name: sshd
+    state: started
+    enabled: yes
+  when: (lookup('env', 'container') != 'docker')
+
+- name: copy chronyd config for containerized systemd
+  copy:
+    src: "chronyd"
+    dest: "/etc/sysconfig/chronyd"
+  when: (lookup('env', 'container') != 'docker')
+
+- name: enable chronyd
+  service:
+    name: chronyd
+    state: started
+    enabled: yes
+  when: (lookup('env', 'container') != 'docker')
+
+# telegraf
+
+- name: install telegraf if homeServer
+  import_tasks: telegraf.yml
+  when: "'homeServers' in group_names"
+
+# fail2ban
+
+- name: fail2ban if public
+  import_tasks: fail2ban.yml
+  when: "'bastion' in group_names"

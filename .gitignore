@@ -1,0 +1,6 @@
+*.retry
+*.swp
+.vim/
+host_vars/
+hosts
+roles/baseline/files/local.root.pem

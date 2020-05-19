@@ -1,0 +1,30 @@
+---
+- name: get copr repo
+  dnf:
+    name: "dnf-command(copr)"
+    state: present
+
+- name: enable copr repo
+  command:
+    cmd: dnf copr -y enable @caddy/caddy
+    warn: false
+
+- name: install caddy
+  dnf:
+    name:
+      - caddy
+      - nss-tools
+    state: latest
+
+- name: enable caddy service
+  service:
+    name: caddy
+    state: started
+    enabled: true
+
+- name: enable http/s in firewalld
+  import_tasks: roles/firewalld/handlers/main.yml
+  vars:
+    firewalld_services:
+      - http
+      - https

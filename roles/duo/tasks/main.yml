@@ -1,0 +1,38 @@
+---
+- name: add duo repo
+  yum_repository:
+    name: duosecurity
+    description: Duo Security Repository
+    enabled: true
+    gpgcheck: true
+    baseurl: https://pkg.duosecurity.com/CentOS/$releasever/$basearch
+    gpgkey: https://duo.com/DUO-GPG-PUBLIC-KEY.asc
+  when: (ansible_distribution == 'CentOS') and (lookup('env', 'container') != 'docker')
+
+- name: install duo
+  package:
+    name: duo_unix
+    state: latest
+  when: (lookup('env', 'container') != 'docker')
+
+- name: add duo configuration
+  template:
+    src: pam_duo.conf
+    dest: /etc/duo/pam_duo.conf
+  when: (lookup('env', 'container') != 'docker')
+
+- name: configure pam.d
+  copy:
+    src: sshd
+    dest: /etc/pam.d/sshd
+    become: yes
+  when: (lookup('env', 'container') != 'docker')
+
+- name: restart sshd
+  service:
+    name: sshd
+    state: restarted
+
+- name: alert user
+  debug:
+    msg: "You need to configure /etc/ssh/sshd_config now!"

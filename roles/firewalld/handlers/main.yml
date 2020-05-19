@@ -1,0 +1,7 @@
+---
+- name: enable firewalld services
+  firewalld:
+    service: "{{ item }}"
+    permanent: yes
+    state: enabled
+  loop: "{{ firewalld_services }}"
