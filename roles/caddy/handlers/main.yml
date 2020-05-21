@@ -14,7 +14,7 @@
     create: yes
   listen: "setup reverse proxy config"
   notify:
-    - restart reverse proxy
+    - restart caddy
 
 - name: disable caddy config
   blockinfile:
@@ -23,4 +23,4 @@
     state: absent
   listen: "disable reverse proxy config"
   notify:
-    - restart reverse proxy
+    - restart caddy

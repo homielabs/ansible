@@ -62,6 +62,7 @@
 
 - name: stop bitwarden so systemd can take over
   shell: podman container stop bitwarden
+  when: not bitwarden_service.stat.exists and bitwarden_command_result.changed
 
 - name: start systemd container-bitwarden service
   service:
