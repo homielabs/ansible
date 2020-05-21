@@ -43,7 +43,7 @@
   register: bitwarden_service
 
 - name: start bitwarden
-  shell: podman run -d --name bitwarden -v /data/bitwarden/:/data/:Z -p 127.0.0.1:3011:80 -p 127.0.0.1:3012:3012 --env-file=/data/bitwarden/.env bitwardenrs/server:alpine # no --rm because we want env vars to persist
+  shell: podman run -d --net=slirp4netns --name bitwarden -v /data/bitwarden/:/data/:Z -p 127.0.0.1:3011:80 -p 127.0.0.1:3012:3012 --env-file=/data/bitwarden/.env bitwardenrs/server:alpine # no --rm because we want env vars to persist
   register: bitwarden_command_result
   failed_when: "bitwarden_command_result.stderr != '' and 'already in use' not in bitwarden_command_result.stderr" # ignore container name already in use errors
   when: not bitwarden_service.stat.exists
