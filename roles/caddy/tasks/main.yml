@@ -16,10 +16,16 @@
       - nss-tools
     state: latest
 
-- name: Create caddyfile
+- name: check to see if Caddyfile exists
+  stat:
+    path: /etc/caddy/Caddyfile
+  register: caddyfile_exists
+
+- name: create caddyfile
   file:
     path: /etc/caddy/Caddyfile
     state: touch
+  when: not caddyfile_exists.stat.exists
 
 - name: enable http/s in firewalld
   import_tasks: roles/firewalld/handlers/main.yml
