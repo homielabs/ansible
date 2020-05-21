@@ -18,7 +18,7 @@
 
 - name: Create caddyfile
   file:
-    path: /data/caddy/Caddyfile
+    path: /etc/caddy/Caddyfile
     state: touch
 
 - name: enable http/s in firewalld
