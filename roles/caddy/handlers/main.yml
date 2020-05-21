@@ -9,21 +9,17 @@
 - name: setup caddy config
   blockinfile:
     path: /etc/caddy/Caddyfile
-    marker: "# ANSIBLE MANAGED {{ service }}"
+    marker: "# {mark} ANSIBLE MANAGED {{ service }}"
     block: "{{ caddyfile_block }}"
     create: yes
   listen: "setup reverse proxy config"
-
-- name: enable caddy config
-  meta: noop
-  listen: "enable reverse proxy config"
   notify:
     - restart reverse proxy
 
 - name: disable caddy config
   blockinfile:
     path: /etc/caddy/Caddyfile
-    marker: "# ANSIBLE MANAGED {{ service }}"
+    marker: "# {mark} ANSIBLE MANAGED {{ service }}"
     state: absent
   listen: "disable reverse proxy config"
   notify:

@@ -66,9 +66,8 @@
 - name: start systemd container-bitwarden service
   service:
     name: container-bitwarden
-    state: started
+    state: restarted
     enabled: true
     daemon-reload: true
   notify:
     - setup reverse proxy config
-    - enable reverse proxy config
