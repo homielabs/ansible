@@ -1,8 +1,14 @@
 # thanks, https://github.com/aeolyus/homelab/blob/master/bitwarden/tasks/main.yml
 ---
-- name: set subdomain to vault
+- name: set domain to vault
   set_fact:
     service: vault
+    caddyfile_block: |
+      vault.{{ domain }} {
+        reverse_proxy /notifications/hub/negotiate  localhost:3011
+        reverse_proxy /notifications/hub/           localhost:3012
+        reverse_proxy /*                            localhost:3011
+      }
 
 - name: install bitwarden docker container
   podman_image:
@@ -43,7 +49,7 @@
   register: bitwarden_service
 
 - name: start bitwarden
-  shell: podman run -d --name bitwarden -v /data/bitwarden/:/data/:Z -p 127.0.0.1:3011:80 -p 127.0.0.1:3012:3012 --env-file=/data/bitwarden/.env bitwardenrs/server:alpine # no --rm because we want env vars to persist
+  shell: podman run -d --net=slirp4netns --name bitwarden -v /data/bitwarden/:/data/:Z -p 127.0.0.1:3011:80 -p 127.0.0.1:3012:3012 --env-file=/data/bitwarden/.env bitwardenrs/server:alpine # no --rm because we want env vars to persist
   register: bitwarden_command_result
   failed_when: "bitwarden_command_result.stderr != '' and 'already in use' not in bitwarden_command_result.stderr" # ignore container name already in use errors
   when: not bitwarden_service.stat.exists
@@ -56,6 +62,7 @@
 
 - name: stop bitwarden so systemd can take over
   shell: podman container stop bitwarden
+  when: not bitwarden_service.stat.exists and bitwarden_command_result.changed
 
 - name: start systemd container-bitwarden service
   service:
@@ -65,4 +72,3 @@
     daemon-reload: true
   notify:
     - setup reverse proxy config
-    - enable reverse proxy config
