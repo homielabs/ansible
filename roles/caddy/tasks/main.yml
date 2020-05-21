@@ -4,10 +4,30 @@
     name: "dnf-command(copr)"
     state: present
 
+# dnf copr -y enable @caddy/caddy
+# that command results in a file with type=rpm-md, so dunno if it should be kept
+# also has enabled_metadata: yes
 - name: enable copr repo
-  command:
-    cmd: dnf copr -y enable @caddy/caddy
-    warn: false
+  yum_repository:
+    name: "copr:copr.fedorainfracloud.org:group_caddy:caddy"
+    file: "_copr:copr.fedorainfracloud.org:group_caddy:caddy"
+    baseurl: https://download.copr.fedorainfracloud.org/results/@caddy/caddy/epel-8-$basearch/
+    description: "Copr repo for caddy owned by @caddy"
+    skip_if_unavailable: yes
+    gpgcheck: yes
+    gpgkey: https://download.copr.fedorainfracloud.org/results/@caddy/caddy/pubkey.gpg
+    repo_gpgcheck: no
+    enabled: yes
+
+- name: fix copr repo
+  ini_file:
+    path: "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:group_caddy:caddy.repo"
+    section: "copr:copr.fedorainfracloud.org:group_caddy:caddy"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+  loop:
+    - { option: type, value: rpm-md }
+    - { option: enabled_metadata, value: 1 }
 
 - name: install caddy
   dnf:
@@ -21,7 +41,7 @@
     path: /etc/caddy/Caddyfile
   register: caddyfile_exists
 
-- name: create caddyfile
+- name: create Caddyfile
   file:
     path: /etc/caddy/Caddyfile
     state: touch
