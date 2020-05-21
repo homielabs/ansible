@@ -11,16 +11,18 @@
 
 ### Roles
 
-| role        | function                              |
-|-------------|---------------------------------------|
-| baseline    | basic config                          |
-| bitwarden   | password manager                      |
-| caddy       | reverse proxy                         |
-| docker      | containerization (may install podman) |
-| duo         | 2FA SSH                               |
-| firewalld   | firewall configuration                |
-| letsencrypt | certificates                          |
-| nginx       | reverse proxy                         |
+| role        | function                              | deployed under |
+|-------------|---------------------------------------|----------------|
+| baseline    | basic config                          |                |
+| bitwarden   | password manager                      | vault          |
+| caddy       | reverse proxy                         |                |
+| docker      | containerization (may install podman) |                |
+| duo         | 2FA SSH                               |                |
+| firewalld   | firewall configuration                |                |
+| letsencrypt | certificates                          |                |
+| nginx       | reverse proxy                         |                |
+
+[Caddy inspo](https://github.com/aeolyus/homelab)
 
 ### Special Groups
 
