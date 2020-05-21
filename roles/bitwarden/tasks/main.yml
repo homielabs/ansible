@@ -67,7 +67,7 @@
 - name: start systemd container-bitwarden service
   service:
     name: container-bitwarden
-    state: restarted
+    state: started
     enabled: true
     daemon-reload: true
   notify:
