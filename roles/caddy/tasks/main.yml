@@ -4,6 +4,11 @@
     name: "dnf-command(copr)"
     state: present
 
+- name: check to see if repo exists
+  stat:
+    path: "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:group_caddy:caddy.repo"
+  register: caddyrepo
+
 # dnf copr -y enable @caddy/caddy
 # that command results in a file with type=rpm-md, so dunno if it should be kept
 # also has enabled_metadata: yes
@@ -18,6 +23,7 @@
     gpgkey: https://download.copr.fedorainfracloud.org/results/@caddy/caddy/pubkey.gpg
     repo_gpgcheck: no
     enabled: yes
+  when: not caddyrepo.stat.exists
 
 - name: fix copr repo
   ini_file:
@@ -28,6 +34,7 @@
   loop:
     - { option: type, value: rpm-md }
     - { option: enabled_metadata, value: 1 }
+  when: not caddyrepo.stat.exists
 
 - name: install caddy
   dnf:
