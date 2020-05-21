@@ -16,11 +16,10 @@
       - nss-tools
     state: latest
 
-- name: enable caddy service
-  service:
-    name: caddy
-    state: started
-    enabled: true
+- name: Create caddyfile
+  file:
+    path: /data/caddy/Caddyfile
+    state: touch
 
 - name: enable http/s in firewalld
   import_tasks: roles/firewalld/handlers/main.yml
@@ -28,3 +27,9 @@
     firewalld_services:
       - http
       - https
+
+- name: enable caddy service
+  service:
+    name: caddy
+    state: started
+    enabled: true
