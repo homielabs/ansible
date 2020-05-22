@@ -7,25 +7,20 @@
   listen: "restart reverse proxy"
 
 - name: setup caddy config
-  template:
-    src: "{{ service }}.caddy.j2"
-    dest: /etc/caddy/{{ service }}
+  blockinfile:
+    path: /etc/caddy/Caddyfile
+    marker: "# {mark} ANSIBLE MANAGED {{ service }}"
+    block: "{{ caddyfile_block }}"
+    create: yes
   listen: "setup reverse proxy config"
-
-- name: enable caddy config
-  file:
-    src: /etc/caddy/sites-available/{{ service }}.j2
-    dest: /etc/caddy/sites-enabled/{{ service }}
-    state: link
-  listen: "enable reverse proxy config"
   notify:
-    - restart reverse proxy
+    - restart caddy
 
 - name: disable caddy config
-  file:
-    src: /etc/caddy/sites-available/{{ service }}.j2
-    dest: /etc/caddy/sites-enabled/{{ service }}
+  blockinfile:
+    path: /etc/caddy/Caddyfile
+    marker: "# {mark} ANSIBLE MANAGED {{ service }}"
     state: absent
   listen: "disable reverse proxy config"
   notify:
-    - restart reverse proxy
+    - restart caddy
