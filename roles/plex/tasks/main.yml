@@ -1,0 +1,63 @@
+---
+- name: set domain to plex
+  set_fact:
+    service: plex
+    caddyfile_block: |
+      plex.{{ domain }} {
+        reverse_proxy /* localhost:32400
+      }
+
+- name: install plex docker container
+  podman_image:
+    name: linuxserver/plex
+    state: present
+
+- name: ensure plex data directory and children exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /data/plex/
+    - /data/plex/config/
+    - /data/plex/movies/
+    - /data/plex/tv/
+
+- name: check to see if systemd service file exists already
+  stat:
+    path: /etc/systemd/system/container-plex.service
+  register: plex_service
+
+- name: start plex
+  shell: >
+    podman run -d --net=slirp4netns
+    --name plex
+    -v /data/plex/config:/config:Z
+    -v /data/plex/movies:/movies:Z
+    -v /data/plex/tv:/tv:Z
+    -e PUID=0
+    -e PGID=0
+    -e VERSION=docker
+    -p 127.0.0.1:32400:32400
+    linuxserver/plex
+  register: plex_command_result
+  failed_when: "plex_command_result.stderr != '' and 'already in use' not in plex_command_result.stderr" # ignore container name already in use errors
+  when: not plex_service.stat.exists
+
+- name: generate systemd service
+  shell:
+    cmd: podman generate systemd --name plex > /etc/systemd/system/container-plex.service
+    creates: /etc/systemd/system/container-plex.service
+  when: not plex_service.stat.exists and plex_command_result.changed
+
+- name: stop plex so systemd can take over
+  shell: podman container stop plex
+  when: not plex_service.stat.exists and plex_command_result.changed
+
+- name: start systemd container-plex service
+  service:
+    name: container-plex
+    state: started
+    enabled: true
+    daemon-reload: true
+  notify:
+    - setup reverse proxy config

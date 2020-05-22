@@ -21,6 +21,7 @@
 | firewalld   | firewall configuration                |                |
 | letsencrypt | certificates                          |                |
 | nginx       | reverse proxy                         |                |
+| plex        | media server                          | plex           |
 
 [Caddy inspo](https://github.com/aeolyus/homelab)
 
