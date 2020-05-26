@@ -12,6 +12,7 @@
       - man
       - git
       - chrony
+      - stow
     state: present
 
 - name: distro specific packages
@@ -41,14 +42,10 @@
   shell: "{{ update_timezone_command }}"
   when: (lookup('env', 'container') != 'docker')
 
-- name: copy config
-  copy:
-    src: "{{ item }}"
-    dest: ~/{{ item }}
-  loop:
-    - ".vimrc"
-    - ".gitconfig"
-    - ".bashrc"
+- name: deploy dotfiles
+  git:
+    repo: https://github.com/guppy0130/dotfiles.git
+    dest: "~/dotfiles"
 
 # Services
 

@@ -8,7 +8,7 @@
     # - duo
     # - bitwarden
     # - letsencrypt
-    - plex
+    # - plex
   handlers:
     - import_tasks: roles/caddy/handlers/main.yml
     - import_tasks: roles/firewalld/handlers/main.yml
