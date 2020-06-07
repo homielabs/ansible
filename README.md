@@ -22,6 +22,7 @@
 | letsencrypt | certificates                          |                |
 | nginx       | reverse proxy                         |                |
 | plex        | media server                          | plex           |
+| step-ca     | ACME server                           | ca             |
 
 [Caddy inspo](https://github.com/aeolyus/homelab)
 
@@ -34,12 +35,12 @@
 
 ### Suggested vars
 
-| var                    | reason                            | required by   |
-|------------------------|-----------------------------------|---------------|
-| domain                 | url, duh                          | reverse proxy |
-| dns_digitalocean_token | DNS validation for wildcard certs | letsencrypt   |
-| email                  | for DNS validation                | letsencrypt   |
-| duo                    | duo 2fa                           | duo           |
-| fail2ban_destemaili    | where fail2ban emails go          | baseline      |
-| influxdb_urls          | where to send metrics             | baseline      |
-| telegraf               | metrics configuration             | baseline      |
+| var                    | reason                            | required by      |
+|------------------------|-----------------------------------|------------------|
+| domain                 | url, duh                          | revprxy, step-ca |
+| dns_digitalocean_token | DNS validation for wildcard certs | letsencrypt      |
+| email                  | for DNS validation                | letsencrypt      |
+| duo                    | duo 2fa                           | duo              |
+| fail2ban_destemail     | where fail2ban emails go          | baseline         |
+| influxdb_urls          | where to send metrics             | baseline         |
+| telegraf               | metrics configuration             | baseline         |

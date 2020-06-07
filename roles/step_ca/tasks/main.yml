@@ -1,0 +1,118 @@
+---
+- name: set domain to ca
+  set_fact:
+    service: ca
+    caddyfile_block: |
+      ca.{{ domain }} {
+        reverse_proxy /* https://localhost:8443
+      }
+    image_tag: 0.14.5-rc.3.cullACMEOrders # TODO: fix when upstream updates. This version has reverse proxy support.
+
+- name: install step-ca docker container
+  podman_image:
+    name: smallstep/step-ca:{{ image_tag }}
+    state: present
+
+- name: ensure step-ca data directory exists
+  file:
+    path: /data/step-ca/
+    state: directory
+    mode: 0777
+
+- name: check step-ca env file
+  stat:
+    path: /data/step-ca/.env
+  register: step_ca_env
+
+- name: generate step-ca admin token
+  set_fact:
+    step_ca_admin_token: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters') }}"
+  when: not step_ca_env.stat.exists
+
+- name: write step-ca password
+  lineinfile:
+    path: /data/step-ca/.env
+    line: "{{ step_ca_admin_token }}"
+    create: true
+  when: not step_ca_env.stat.exists
+
+- name: check to see if systemd service file exists already
+  stat:
+    path: /etc/systemd/system/container-step-ca.service
+  register: step_ca_service
+
+- name: generate root/intermediate certs
+  shell:
+    cmd: >-
+      podman run -d
+      --rm
+      -v /data/step-ca/:/home/step/:Z
+      smallstep/step-ca:{{ image_tag }}
+      step ca init
+      -name='ca.{{ domain }}'
+      -dns='ca.{{ domain }}',{{ ansible_default_ipv4.address }},localhost
+      -address=':8443'
+      -provisioner=jwk
+      -provisioner-password-file=/home/step/.env
+      -password-file=/home/step/.env
+    creates: /data/step-ca/certs/root_ca.crt
+
+# the following two might not be necessary, but sometimes it bugs out without it, so
+- name: nuke existing root cert
+  file:
+    path: /etc/pki/ca-trust/source/anchors/step-ca.root.pem
+    state: absent
+
+- name: reset ca-bundle
+  command: update-ca-trust extract
+
+- name: add the root to host trust
+  file:
+    src: /data/step-ca/certs/root_ca.crt
+    dest: /etc/pki/ca-trust/source/anchors/step-ca.root.pem
+    state: link
+
+- name: update ca-bundle
+  command: update-ca-trust extract
+
+- name: add the ACME provisioner
+  shell:
+    cmd: >-
+      podman run -d
+      --rm
+      -v /data/step-ca/:/home/step/:Z
+      smallstep/step-ca:{{ image_tag }}
+      step ca provisioner add acme -type=acme
+
+- name: start ACME server
+  shell: >-
+    podman run -d --net=slirp4netns
+    --name step-ca
+    -v /data/step-ca/:/home/step/:Z
+    -p 127.0.0.1:8443:8443
+    smallstep/step-ca:{{ image_tag }}
+    step-ca
+    -password-file=/home/step/.env
+    /home/step/config/ca.json
+  register: step_ca_command_result
+  failed_when: "step_ca_command_result.stderr != '' and 'already in use' not in step_ca_command_result.stderr" # ignore container name already in use errors
+  when: not step_ca_service.stat.exists
+
+- name: generate systemd service
+  shell:
+    cmd: podman generate systemd --name step-ca > /etc/systemd/system/container-step-ca.service
+    creates: /etc/systemd/system/container-step-ca.service
+  when: not step_ca_service.stat.exists and step_ca_command_result.changed
+
+- name: stop step-ca so systemd can take over
+  shell: podman container stop step-ca
+  when: not step_ca_service.stat.exists and step_ca_command_result.changed
+
+- name: start systemd container-step-ca service
+  service:
+    name: container-step-ca
+    state: restarted # otherwise badger messes up, and bonus is we restart reverse proxy for new root certs
+    enabled: true
+    daemon-reload: true
+  notify:
+    - setup reverse proxy config

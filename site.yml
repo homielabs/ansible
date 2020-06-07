@@ -9,6 +9,7 @@
     # - bitwarden
     # - letsencrypt
     # - plex
+    # - step_ca
   handlers:
     - import_tasks: roles/caddy/handlers/main.yml
     - import_tasks: roles/firewalld/handlers/main.yml
