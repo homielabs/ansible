@@ -4,9 +4,10 @@
   become: yes
   roles:
     # - baseline
+    # - bitwarden
+    # - caddy
     # - docker
     # - duo
-    # - bitwarden
     # - letsencrypt
     # - plex
     # - step_ca

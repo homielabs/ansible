@@ -4,4 +4,4 @@
 
 ### Vars
 
-No vars, but `domain` should be established.
+No vars, but `domain` and `email` should be established.

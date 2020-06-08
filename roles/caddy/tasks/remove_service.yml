@@ -1,0 +1,9 @@
+---
+- name: disable caddy config
+  blockinfile:
+    path: /etc/caddy/Caddyfile
+    marker: "# {mark} ANSIBLE MANAGED {{ service }}"
+    state: absent
+    validate: caddy adapt --config %s --validate
+  notify:
+    - restart reverse proxy

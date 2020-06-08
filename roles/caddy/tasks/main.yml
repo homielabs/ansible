@@ -15,23 +15,25 @@
   command: dnf copr -y enable @caddy/caddy
   when: not caddyrepo.stat.exists
 
-- name: install caddy
+- name: install caddy and deps
   dnf:
     name:
       - caddy
       - nss-tools
     state: latest
 
-- name: check to see if Caddyfile exists
-  stat:
+- name: setup caddy config
+  blockinfile:
     path: /etc/caddy/Caddyfile
-  register: caddyfile_exists
-
-- name: create Caddyfile
-  file:
-    path: /etc/caddy/Caddyfile
-    state: touch
-  when: not caddyfile_exists.stat.exists
+    marker: "# {mark} ANSIBLE MANAGED config"
+    block: |
+      {
+        experimental_http3
+        email {{ email }}
+      }
+    create: yes
+    insertbefore: BOF
+    validate: caddy adapt --config %s --validate
 
 - name: enable http/s in firewalld
   import_tasks: roles/firewalld/handlers/main.yml

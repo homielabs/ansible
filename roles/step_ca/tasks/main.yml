@@ -1,11 +1,6 @@
 ---
 - name: set domain to ca
   set_fact:
-    service: ca
-    caddyfile_block: |
-      ca.{{ domain }} {
-        reverse_proxy /* https://localhost:8443
-      }
     image_tag: 0.14.5-rc.3.cullACMEOrders # TODO: fix when upstream updates. This version has reverse proxy support.
 
 - name: install step-ca docker container
@@ -114,5 +109,14 @@
     state: restarted # otherwise badger messes up, and bonus is we restart reverse proxy for new root certs
     enabled: true
     daemon-reload: true
-  notify:
-    - setup reverse proxy config
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        service: ca
+        caddyfile_block: |
+          ca.{{ domain }} {
+            reverse_proxy /* https://localhost:8443
+          }

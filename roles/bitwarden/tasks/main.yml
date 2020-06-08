@@ -1,15 +1,5 @@
 # thanks, https://github.com/aeolyus/homelab/blob/master/bitwarden/tasks/main.yml
 ---
-- name: set domain to vault
-  set_fact:
-    service: vault
-    caddyfile_block: |
-      vault.{{ domain }} {
-        reverse_proxy /notifications/hub/negotiate  localhost:3011
-        reverse_proxy /notifications/hub/           localhost:3012
-        reverse_proxy /*                            localhost:3011
-      }
-
 - name: install bitwarden docker container
   podman_image:
     name: bitwardenrs/server:alpine
@@ -77,5 +67,16 @@
     state: started
     enabled: true
     daemon-reload: true
-  notify:
-    - setup reverse proxy config
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        service: vault
+        caddyfile_block: |
+          vault.{{ domain }} {
+            reverse_proxy /notifications/hub/negotiate  localhost:3011
+            reverse_proxy /notifications/hub/           localhost:3012
+            reverse_proxy /*                            localhost:3011
+          }

@@ -1,0 +1,10 @@
+---
+- name: setup caddy config
+  blockinfile:
+    path: /etc/caddy/Caddyfile
+    marker: "# {mark} ANSIBLE MANAGED {{ service }}"
+    block: "{{ caddyfile_block }}"
+    create: yes
+    validate: caddy adapt --config %s --validate
+  notify:
+    - restart reverse proxy

@@ -5,22 +5,3 @@
     state: restarted
     enabled: true
   listen: "restart reverse proxy"
-
-- name: setup caddy config
-  blockinfile:
-    path: /etc/caddy/Caddyfile
-    marker: "# {mark} ANSIBLE MANAGED {{ service }}"
-    block: "{{ caddyfile_block }}"
-    create: yes
-  listen: "setup reverse proxy config"
-  notify:
-    - restart caddy
-
-- name: disable caddy config
-  blockinfile:
-    path: /etc/caddy/Caddyfile
-    marker: "# {mark} ANSIBLE MANAGED {{ service }}"
-    state: absent
-  listen: "disable reverse proxy config"
-  notify:
-    - restart caddy
