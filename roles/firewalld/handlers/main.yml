@@ -2,6 +2,6 @@
 - name: enable firewalld services
   firewalld:
     service: "{{ item }}"
-    permanent: yes
+    permanent: true
     state: enabled
   loop: "{{ firewalld_services }}"

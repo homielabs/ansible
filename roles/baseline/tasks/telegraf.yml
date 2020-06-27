@@ -4,7 +4,7 @@
     name: influxdb
     description: InfluxDB Repository - RHEL $releasever
     baseurl: https://repos.influxdata.com/rhel/$releasever/$basearch/stable
-    gpgcheck: yes
+    gpgcheck: true
     gpgkey: https://repos.influxdata.com/influxdb.key
   when: (ansible_distribution == 'CentOS') and (lookup('env', 'container') != 'docker')
 
@@ -22,4 +22,4 @@
   systemd:
     name: telegraf
     state: restarted
-    enabled: yes
+    enabled: true

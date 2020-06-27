@@ -2,11 +2,11 @@
   dnf:
     name: '*'
     state: latest
-    update_cache: yes
+    update_cache: true
     exclude: filesystem*
   when: ansible_distribution == 'CentOS'
 
 - name: update everything (alpine)
   apk:
-    upgrade: yes
+    upgrade: true
   when: ansible_distribution == 'Alpine'

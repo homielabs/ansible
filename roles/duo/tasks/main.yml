@@ -25,7 +25,7 @@
   copy:
     src: sshd
     dest: /etc/pam.d/sshd
-    become: yes
+    become: true
   when: (lookup('env', 'container') != 'docker')
 
 - name: restart sshd

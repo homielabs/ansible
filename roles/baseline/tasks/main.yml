@@ -53,7 +53,7 @@
   service:
     name: sshd
     state: started
-    enabled: yes
+    enabled: true
   when: (lookup('env', 'container') != 'docker')
 
 - name: copy chronyd config for containerized systemd
@@ -66,7 +66,7 @@
   service:
     name: chronyd
     state: started
-    enabled: yes
+    enabled: true
   when: (lookup('env', 'container') != 'docker')
 
 # telegraf

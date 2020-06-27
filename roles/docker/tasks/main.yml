@@ -17,5 +17,5 @@
   service:
     name: docker
     state: started
-    enabled: yes
+    enabled: true
   when: (ansible_distribution != 'CentOS') and (lookup('env', 'container') != 'docker')

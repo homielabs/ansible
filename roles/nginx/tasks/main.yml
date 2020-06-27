@@ -4,8 +4,8 @@
     name: nginx-mainline
     description: nginx mainline repo
     baseurl: http://nginx.org/packages/mainline/centos/$releasever/$basearch/
-    gpgcheck: yes
-    enabled: yes
+    gpgcheck: true
+    enabled: true
     gpgkey: https://nginx.org/keys/nginx_signing.key
 
 - name: install nginx
@@ -22,4 +22,4 @@
   systemd:
     name: nginx
     state: started
-    enabled: yes
+    enabled: true
