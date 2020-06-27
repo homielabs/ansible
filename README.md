@@ -22,6 +22,7 @@
 | letsencrypt | certificates                          |                |
 | nginx       | reverse proxy                         |                |
 | plex        | media server                          | plex           |
+| proxmox     | configures proxmox after install      |                |
 | step-ca     | ACME server                           | ca             |
 
 [Caddy inspo](https://github.com/aeolyus/homelab)

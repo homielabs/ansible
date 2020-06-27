@@ -10,6 +10,7 @@
     # - duo
     # - letsencrypt
     # - plex
+    # - proxmox
     # - step_ca
   handlers:
     - import_tasks: roles/caddy/handlers/main.yml
