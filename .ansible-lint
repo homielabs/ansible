@@ -1,6 +1,7 @@
 ---
 exclude_paths:
   - .github/
+  - cloud_init/
 warn_list:
   - load-failure # Failed to load or parse file
   - experimental # all rules tagged as experimental (901)

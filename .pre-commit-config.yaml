@@ -17,6 +17,7 @@ repos:
         args:
           - -f
           - parsable
+        exclude: "cloud_init/.*"
   - repo: https://github.com/ansible-community/ansible-lint.git
     rev: v5.0.8
     hooks:
