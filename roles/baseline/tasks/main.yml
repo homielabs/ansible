@@ -18,25 +18,26 @@
 - name: distro specific packages
   package:
     name: "{{ packages }}"
+    state: present
 
 - name: updates
   include: update_unix.yml
 
 # Keys/certs
 
-- name: copy local root CA
-  copy:
-    src: "local.root.pem"
-    dest: "{{ cert_location }}"
+# - name: copy local root CA
+#   copy:
+#     src: "local.root.pem"
+#     dest: "{{ cert_location }}"
 
-- name: Add local root CA to trust
-  command: "{{ cert_update_command }}"
+# - name: Add local root CA to trust
+#   command: "{{ cert_update_command }}"
 
 # config
 
 - name: set locale
   command: localectl set-locale LANG=en_US.utf8
-  when: (ansible_distribution == 'CentOS') and (lookup('env', 'container') != 'docker')
+  when: (lookup('env', 'container') != 'docker')
 
 - name: set timezone
   shell: "{{ update_timezone_command }}"
@@ -60,7 +61,7 @@
   copy:
     src: "chronyd"
     dest: "/etc/sysconfig/chronyd"
-  when: (lookup('env', 'container') != 'docker')
+  when: (lookup('env', 'container') == 'docker')
 
 - name: enable chronyd
   service:

@@ -1,0 +1,5 @@
+---
+cert_location: /usr/local/share/ca-certificates
+cert_update_command: update-ca-certificates
+packages: []
+update_timezone_command: timedatectl set-timezone America/Los_Angeles

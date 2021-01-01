@@ -4,16 +4,8 @@
     name:
       - fail2ban
       - sendmail
+      - whois
     state: present
-
-# At some point, this should be resolved...
-- name: manually install whois
-  package:
-    name:
-      - "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/Packages/whois-nls-5.5.1-2.el8.noarch.rpm"
-      - "http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/Packages/whois-5.5.1-2.el8.x86_64.rpm"
-    state: present
-  when: (ansible_distribution != 'CentOS')
 
 - name: get IP of controller
   uri:
@@ -33,5 +25,5 @@
     state: restarted
     enabled: true
   loop:
-    - fail2ban
     - sendmail
+    - fail2ban
