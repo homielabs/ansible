@@ -1,12 +1,12 @@
 [DEFAULT]
-ignoreip    = {{ ip_response.content }}/24
+ignoreip    = {{ ip_response.content }}/32
 bantime     = 21600
 findtime    = 300
 maxretry    = 3
 banaction   = iptables-multiport
 backend     = systemd
 destemail   = {{ fail2ban_destemail }}
-sendername  = fail2ban@{{ inventory_hostname_short }}
+sendername  = fail2ban@{{ inventory_hostname }}
 mta         = sendmail
 
 [sshd]

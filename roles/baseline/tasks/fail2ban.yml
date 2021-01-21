@@ -19,6 +19,10 @@
     src: fail2ban.jail.local.j2
     dest: /etc/fail2ban/jail.local
 
+- name: hostname fixup FQDN for sendmail
+  hostname:
+    name: "{{ inventory_hostname }}"
+
 - name: start/enable fail2ban/sendmail
   systemd:
     name: "{{ item }}"
