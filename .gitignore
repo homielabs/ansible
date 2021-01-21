@@ -4,3 +4,4 @@
 host_vars/
 hosts
 roles/baseline/files/local.root.pem
+.vscode/
