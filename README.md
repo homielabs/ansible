@@ -32,6 +32,7 @@ ansible-playbook site.yml
 | plex        | media server                          | plex           |
 | proxmox     | configures proxmox after install      |                |
 | step-ca     | ACME server                           | ca             |
+| vault       | Hashicorp Vault                       | vault          |
 
 #### Add a Role
 

@@ -1,0 +1,34 @@
+[Unit]
+Description="HashiCorp Vault - A tool for managing secrets"
+Documentation=https://www.vaultproject.io/docs/
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty=/etc/vault.d/vault.hcl
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+# run as root for mlock hax
+User=root
+Group=root
+# disabled default sandbox settings because running as root user
+# include mlock capabilities here, I think
+SecureBits=keep-caps
+AmbientCapabilities=CAP_IPC_LOCK
+CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
+# vault + children processes cannot have new perms
+NoNewPrivileges=yes
+# vault is at /usr/bin/vault not /usr/local/bin/vault
+ExecStart=/usr/bin/vault server -config={{ vault_config_location }}
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillMode=process
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+LimitNOFILE=65536
+# do not swap
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=multi-user.target
