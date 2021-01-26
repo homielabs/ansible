@@ -1,0 +1,42 @@
+---
+- name: install firewalld
+  package:
+    name: firewalld
+    state: present
+
+- name: start firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: get services
+  service_facts:
+
+- name: disable ufw if exists
+  service:
+    name: ufw
+    state: stopped
+    enabled: false
+  register: ufw_status
+  when: "'ufw' in ansible_facts.services"
+
+- name: configure firewalld on default interface
+  ansible.posix.firewalld:
+    immediate: true
+    permanent: true
+    interface: "{{ ansible_default_ipv4.interface }}"
+    state: enabled
+    zone: public
+
+- name: enable services through firewalld
+  ansible.posix.firewalld:
+    immediate: true
+    permanent: true
+    service: "{{ item }}"
+    state: enabled
+    zone: public
+  with_items:
+    - ssh
+    - http
+    - https

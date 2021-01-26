@@ -1,6 +1,6 @@
 ---
 - name: enable firewalld services
-  firewalld:
+  ansible.posix.firewalld:
     service: "{{ item }}"
     permanent: true
     state: enabled
