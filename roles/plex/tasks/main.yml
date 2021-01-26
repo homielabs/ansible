@@ -8,6 +8,7 @@
   file:
     path: "{{ item }}"
     state: directory
+    mode: 0777 # everyone should be able to add content
   loop:
     - /data/plex/
     - /data/plex/config/
@@ -20,7 +21,7 @@
   register: plex_service
 
 - name: start plex
-  shell: >
+  command: >-
     podman run -d --net=slirp4netns
     --name plex
     -v /data/plex/config:/config:Z
@@ -32,17 +33,22 @@
     -p 127.0.0.1:32400:32400
     linuxserver/plex
   register: plex_command_result
-  failed_when: "plex_command_result.stderr != '' and 'already in use' not in plex_command_result.stderr" # ignore container name already in use errors
+  failed_when:
+    - plex_command_result.stderr
+    # ignore container name already in use errors
+    - "'already in use' not in plex_command_result.stderr"
   when: not plex_service.stat.exists
 
 - name: generate systemd service
   shell:
-    cmd: podman generate systemd --name plex > /etc/systemd/system/container-plex.service
+    cmd: >-
+      podman generate systemd --name plex >
+      /etc/systemd/system/container-plex.service
     creates: /etc/systemd/system/container-plex.service
   when: not plex_service.stat.exists and plex_command_result.changed
 
 - name: stop plex so systemd can take over
-  shell: podman container stop plex
+  command: podman container stop plex
   when: not plex_service.stat.exists and plex_command_result.changed
 
 - name: start systemd container-plex service

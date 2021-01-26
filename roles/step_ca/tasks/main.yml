@@ -29,6 +29,7 @@
     path: /data/step-ca/.env
     line: "{{ step_ca_admin_token }}"
     create: true
+    mode: 0600
   when: not step_ca_env.stat.exists
 
 - name: check to see if systemd service file exists already
@@ -37,7 +38,7 @@
   register: step_ca_service
 
 - name: generate root/intermediate certs
-  shell:
+  command:
     cmd: >-
       podman run -d
       --rm
@@ -71,16 +72,15 @@
   command: update-ca-trust extract
 
 - name: add the ACME provisioner
-  shell:
-    cmd: >-
-      podman run -d
-      --rm
-      -v /data/step-ca/:/home/step/:Z
-      smallstep/step-ca:{{ image_tag }}
-      step ca provisioner add acme -type=acme
+  command: >-
+    podman run -d
+    --rm
+    -v /data/step-ca/:/home/step/:Z
+    smallstep/step-ca:{{ image_tag }}
+    step ca provisioner add acme -type=acme
 
 - name: start ACME server
-  shell: >-
+  command: >-
     podman run -d --net=slirp4netns
     --name step-ca
     -v /data/step-ca/:/home/step/:Z
@@ -90,18 +90,27 @@
     -password-file=/home/step/.env
     /home/step/config/ca.json
   register: step_ca_command_result
-  failed_when: "step_ca_command_result.stderr != '' and 'already in use' not in step_ca_command_result.stderr" # ignore container name already in use errors
+  failed_when:
+    - step_ca_command_result.stderr
+    # ignore container name already in use errors
+    - "'already in use' not in step_ca_command_result.stderr"
   when: not step_ca_service.stat.exists
 
 - name: generate systemd service
   shell:
-    cmd: podman generate systemd --name step-ca > /etc/systemd/system/container-step-ca.service
+    cmd: >-
+      podman generate systemd --name step-ca >
+      /etc/systemd/system/container-step-ca.service
     creates: /etc/systemd/system/container-step-ca.service
-  when: not step_ca_service.stat.exists and step_ca_command_result.changed
+  when:
+    - not step_ca_service.stat.exists
+    - step_ca_command_result.changed
 
 - name: stop step-ca so systemd can take over
-  shell: podman container stop step-ca
-  when: not step_ca_service.stat.exists and step_ca_command_result.changed
+  command: podman container stop step-ca
+  when:
+    - not step_ca_service.stat.exists
+    - step_ca_command_result.changed
 
 - name: start systemd container-step-ca service
   service:
@@ -110,7 +119,7 @@
     enabled: true
     daemon-reload: true
 
-- name: add service to reverse proxy
+- name: add service to reverse proxy # noqa: 901
   include_tasks:
     file: roles/caddy/tasks/add_service.yml
     apply:

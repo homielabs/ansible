@@ -8,16 +8,19 @@
   file:
     path: /data/certbot/
     state: directory
+    mode: 0700
 
 - name: copy DO credentials
   template:
     src: .env.j2
     dest: /data/certbot/.env
+    mode: 0700
 
 - name: ensure folder exists for certs
   file:
     path: "{{ item }}"
     state: directory
+    mode: 0750
   loop:
     - /etc/letsencrypt
     - /var/lib/letsencrypt
@@ -25,5 +28,19 @@
 
 # theoretically correct but can't get it to work
 - name: run certbot/dns-digitalocean image
-  shell:
-    cmd: podman run -it --rm --name certbot -v /etc/letsencrypt:/etc/letsencrypt:z -v /var/lib/letsencrypt:/var/lib/letsencrypt:z -v /data/certbot:/data/certbot:z -v /var/log/letsencrypt:/var/log/letsencrypt:z -p 80:80 -p 443:443 certbot/dns-digitalocean certonly --dns-digitalocean --dns-digitalocean-credentials /data/certbot/digitalocean.ini --agree-tos -m {{ email }} -n -d *.{{ domain }} -d {{ domain }}
+  command: >-
+    podman run -it --rm --name certbot
+    -v /etc/letsencrypt:/etc/letsencrypt:z
+    -v /var/lib/letsencrypt:/var/lib/letsencrypt:z
+    -v /data/certbot:/data/certbot:z
+    -v /var/log/letsencrypt:/var/log/letsencrypt:z
+    -p 80:80
+    -p 443:443
+    certbot/dns-digitalocean certonly
+      --dns-digitalocean
+      --dns-digitalocean-credentials /data/certbot/digitalocean.ini
+      --agree-tos
+      -m {{ email }}
+      -n
+      -d *.{{ domain }}
+      -d {{ domain }}

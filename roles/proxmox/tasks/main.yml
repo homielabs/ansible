@@ -21,6 +21,7 @@
     line: deb http://download.proxmox.com/debian/pve buster pve-no-subscription
     state: present
     create: true
+    mode: 0755
 
-- name: pull turnkey updates
+- name: pull turnkey updates # noqa 301
   command: pveam update

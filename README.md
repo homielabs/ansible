@@ -2,11 +2,13 @@
 
 ## Speedy Config Time
 
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+
 ### Usage
 
 1. spin up machine
 2. add the ansible SSH key to the machine
-3. add machine to hosts
+3. add machine to inventory
 4. `ansible-playbook site.yml`
 
 ### Roles
@@ -26,6 +28,19 @@
 | step-ca     | ACME server                           | ca             |
 
 [Caddy inspo](https://github.com/aeolyus/homelab)
+
+### Lint
+
+Lots of ways to manually lint (good for debug/verbose):
+
+```bash
+ansible-lint roles/*  # most explicit/working
+ansible-lint inventory/**/*.yml  # there's no inventory type for ansible-lint
+ansible-lint site.yml  # you'll need to uncomment the roles
+yamllint .
+```
+
+But you should really just install `pre-commit` and let that handle it for you.
 
 ### Special Groups
 

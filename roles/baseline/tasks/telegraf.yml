@@ -17,6 +17,7 @@
   template:
     src: telegraf.conf.j2
     dest: /etc/telegraf/telegraf.conf
+    mode: 0644
 
 - name: start/enable telegraf service
   systemd:

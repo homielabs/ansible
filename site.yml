@@ -1,17 +1,22 @@
 ---
 - name: Master Playbook
   hosts: all
-  become: yes
+  become: true
   roles:
+    # yamllint disable rule:comments-indentation
     # - baseline
     # - bitwarden
     # - caddy
     # - docker
     # - duo
+    # - firewalld
+    # - k3s
     # - letsencrypt
     # - plex
     # - proxmox
     # - step_ca
+    # - vault
+    # yamllint enable rule:comments-indentation
   handlers:
     - import_tasks: roles/caddy/handlers/main.yml
     - import_tasks: roles/firewalld/handlers/main.yml

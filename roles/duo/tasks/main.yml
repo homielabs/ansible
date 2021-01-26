@@ -12,13 +12,14 @@
 - name: install duo
   package:
     name: duo_unix
-    state: latest
+    state: latest # noqa 403 usually stable
   when: (lookup('env', 'container') != 'docker')
 
 - name: add duo configuration
   template:
     src: pam_duo.conf
     dest: /etc/duo/pam_duo.conf
+    mode: 0644
   when: (lookup('env', 'container') != 'docker')
 
 - name: configure pam.d
@@ -26,6 +27,7 @@
     src: sshd
     dest: /etc/pam.d/sshd
     become: true
+    mode: 0644
   when: (lookup('env', 'container') != 'docker')
 
 - name: restart sshd

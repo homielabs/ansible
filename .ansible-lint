@@ -1,0 +1,8 @@
+---
+warn_list:
+  - "901" # Failed to load or parse file
+  - experimental # all rules tagged as experimental (901)
+skip_list:
+  - "701" # meta/main.yml should contain relevant info
+  - "301" # Commands should not change things if nothing needs doing
+  - "503" # Tasks that run when changed should likely be handlers

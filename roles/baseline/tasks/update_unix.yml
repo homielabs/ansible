@@ -2,4 +2,4 @@
 - name: update everything, except for filesystem
   package:
     name: "*"
-    state: latest
+    state: latest # noqa 403 I think I know what I'm doing

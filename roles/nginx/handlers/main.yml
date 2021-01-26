@@ -10,6 +10,7 @@
   template:
     src: "{{ service }}.nginx.j2"
     dest: /etc/nginx/sites-available/{{ service }}.j2
+    mode: 0644
   listen: "setup reverse proxy config"
   notify:
     - enable reverse proxy

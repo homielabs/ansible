@@ -11,12 +11,13 @@
 - name: install nginx
   package:
     name: nginx
-    state: latest
+    state: latest # noqa 403 usually always stable
 
 - name: set nginx.conf in /etc/nginx/
   copy:
     src: nginx.conf
     dest: /etc/nginx/nginx.conf
+    mode: 0644
 
 - name: enable nginx
   systemd:

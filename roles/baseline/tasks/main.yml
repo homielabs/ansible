@@ -39,14 +39,19 @@
   command: localectl set-locale LANG=en_US.utf8
   when: (lookup('env', 'container') != 'docker')
 
+# - name: set timezone
+#   shell: "{{ update_timezone_command }}"
+#   when: (lookup('env', 'container') != 'docker')
+
 - name: set timezone
-  shell: "{{ update_timezone_command }}"
-  when: (lookup('env', 'container') != 'docker')
+  community.general.timezone:
+    name: America/Los_Angeles
 
 - name: deploy dotfiles
   git:
     repo: https://github.com/guppy0130/dotfiles.git
     dest: "~/dotfiles"
+    version: master
 
 # Services
 
@@ -61,6 +66,8 @@
   copy:
     src: "chronyd"
     dest: "/etc/sysconfig/chronyd"
+    mode: 0644
+
   when: (lookup('env', 'container') == 'docker')
 
 - name: enable chronyd

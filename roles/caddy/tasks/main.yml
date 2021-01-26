@@ -42,7 +42,8 @@
           }
         }
       }
-    create: yes
+    create: true
+    mode: 0644
     insertbefore: BOF # beginning of file, so at the very top
     validate: caddy adapt --config %s --validate
 

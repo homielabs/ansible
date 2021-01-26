@@ -1,0 +1,26 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: master
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/psf/black
+    rev: master
+    hooks:
+      - id: black
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: master
+    hooks:
+      - id: yamllint
+        files: \.(yaml|yml)$
+  - repo: https://github.com/ansible-community/ansible-lint.git
+    rev: master
+    hooks:
+      - id: ansible-lint
+  - repo: https://github.com/Yelp/detect-secrets.git
+    rev: master
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]

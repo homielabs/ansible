@@ -1,0 +1,9 @@
+---
+name: ansible-2.9
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+      - ansible
+      - ansible-lint
+      - pre-commit

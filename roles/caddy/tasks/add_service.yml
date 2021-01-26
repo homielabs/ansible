@@ -4,7 +4,8 @@
     path: "{{ caddy_config_location }}"
     marker: "# {mark} ANSIBLE MANAGED {{ service }}"
     block: "{{ caddyfile_block }}"
-    create: yes
+    create: true
+    mode: 0644
     validate: caddy adapt --config %s --validate
   notify:
     - restart reverse proxy
