@@ -1,39 +1,54 @@
 ---
-- name: get copr repo
-  dnf:
-    name: "dnf-command(copr)"
+- name: distro specific package management
+  include_tasks: "{{ ansible_distribution | lower }}.yml"
+
+- name: install caddy
+  package:
+    name: caddy
     state: present
 
-- name: check to see if repo exists
-  stat:
-    path: "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:group_caddy:caddy.repo"
-  register: caddyrepo
+- name: determine if Caddyfile is ansible-managed
+  lineinfile:
+    path: "{{ caddy_config_location }}"
+    regexp: "ANSIBLE MANAGED"
+    state: absent
+  check_mode: true
+  changed_when: false
+  register: caddyfile_ansible_managed
 
-# dnf copr -y enable @caddy/caddy
-# abstraction barriers!
-- name: enable copr repo
-  command: dnf copr -y enable @caddy/caddy
-  when: not caddyrepo.stat.exists
-
-- name: install caddy and deps
-  dnf:
-    name:
-      - caddy
-      - nss-tools
-    state: latest
+# this has the nasty side effect of removing everything, including things
+# under block control
+- name: remove default config
+  file:
+    path: "{{ caddy_config_location }}"
+    state: absent
+  when: not caddyfile_ansible_managed.found
 
 - name: setup caddy config
   blockinfile:
-    path: /etc/caddy/Caddyfile
+    path: "{{ caddy_config_location }}"
     marker: "# {mark} ANSIBLE MANAGED config"
     block: |
       {
-        experimental_http3
         email {{ email }}
+        admin off
+        {% if caddy_acme_ca is defined %}
+        acme_ca {{ caddy_acme_ca }}
+        {% endif %}
+
+        servers {
+          protocol {
+            experimental_http3
+          }
+        }
       }
     create: yes
-    insertbefore: BOF
+    insertbefore: BOF # beginning of file, so at the very top
     validate: caddy adapt --config %s --validate
+
+- name: setup example service
+  import_tasks: example_service.yml
+  when: deploy_example_service
 
 - name: enable http/s in firewalld
   import_tasks: roles/firewalld/handlers/main.yml

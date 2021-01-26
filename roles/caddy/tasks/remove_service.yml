@@ -1,7 +1,7 @@
 ---
 - name: disable caddy config
   blockinfile:
-    path: /etc/caddy/Caddyfile
+    path: "{{ caddy_config_location }}"
     marker: "# {mark} ANSIBLE MANAGED {{ service }}"
     state: absent
     validate: caddy adapt --config %s --validate

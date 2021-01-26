@@ -1,7 +1,7 @@
 ---
 - name: setup caddy config
   blockinfile:
-    path: /etc/caddy/Caddyfile
+    path: "{{ caddy_config_location }}"
     marker: "# {mark} ANSIBLE MANAGED {{ service }}"
     block: "{{ caddyfile_block }}"
     create: yes

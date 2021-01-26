@@ -1,0 +1,5 @@
+---
+email: ""
+caddy_config_location: /etc/caddy/Caddyfile
+deploy_example_service: true
+# caddy_acme_ca: https://acme-staging-v02.api.letsencrypt.org/directory

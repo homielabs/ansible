@@ -1,0 +1,21 @@
+---
+- name: get copr repo
+  dnf:
+    name: "dnf-command(copr)"
+    state: present
+
+- name: check to see if repo exists
+  stat:
+    path: "/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:group_caddy:caddy.repo"
+  register: caddyrepo
+
+# dnf copr -y enable @caddy/caddy
+# abstraction barriers!
+- name: enable copr repo
+  command: dnf copr -y enable @caddy/caddy
+  when: not caddyrepo.stat.exists
+
+- name: install caddy deps
+  dnf:
+    name: nss-tools
+    state: latest

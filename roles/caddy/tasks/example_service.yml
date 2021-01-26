@@ -1,0 +1,11 @@
+---
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        service: example_service
+        caddyfile_block: |
+          {{ domain }} {
+            respond "hello world"
+          }
