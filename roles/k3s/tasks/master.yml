@@ -1,0 +1,13 @@
+---
+- name: Wait for node-token
+  wait_for:
+    path: "{{ k3s_node_token_path }}"
+
+- name: Get node-token
+  slurp:
+    src: "{{ k3s_node_token_path }}"
+  register: node_token
+
+- name: Store master node_token
+  set_fact:
+    token: "{{ node_token.content | b64decode | regex_replace('\n', '') }}"
