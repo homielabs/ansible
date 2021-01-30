@@ -34,7 +34,7 @@
 Lots of ways to manually lint (good for debug/verbose):
 
 ```bash
-ansible-lint roles/*  # most explicit/working
+ansible-lint roles/*  # ignore the 901 errors if you run this
 ansible-lint inventory/**/*.yml  # there's no inventory type for ansible-lint
 ansible-lint site.yml  # you'll need to uncomment the roles
 yamllint .

@@ -119,7 +119,7 @@
     enabled: true
     daemon-reload: true
 
-- name: add service to reverse proxy # noqa: 901
+- name: add service to reverse proxy
   include_tasks:
     file: roles/caddy/tasks/add_service.yml
     apply:

@@ -82,7 +82,7 @@
 
 - name: add service to reverse proxy
   include_tasks:
-    file: roles/caddy/tasks/add_service.yml # noqa 901 correct file location
+    file: roles/caddy/tasks/add_service.yml
     apply:
       vars:
         service: vault

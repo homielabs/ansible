@@ -14,7 +14,6 @@ repos:
     rev: master
     hooks:
       - id: yamllint
-        files: \.(yaml|yml)$
   - repo: https://github.com/ansible-community/ansible-lint.git
     rev: master
     hooks:
