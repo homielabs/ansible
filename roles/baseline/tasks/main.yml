@@ -17,6 +17,7 @@
       - chrony
       - stow
       - gnupg
+      - bat
     state: present
 
 - name: distro specific packages

@@ -1,7 +1,8 @@
+# 3 failed attempts in 5 minutes = 6h ban
 [DEFAULT]
 ignoreip    = {{ ip_response.content }}/32
-bantime     = 21600
-findtime    = 300
+bantime     = 21600  # 6 hours
+findtime    = 300  # 5 minutes
 maxretry    = 3
 banaction   = iptables-multiport
 backend     = systemd

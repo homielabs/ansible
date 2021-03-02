@@ -59,8 +59,37 @@
     - "'kube_master' in group_names"
     - node_token_present.stat.exists
 
+- name: make manifest directory
+  file:
+    path: "{{ k3s_manifest_dir }}"
+    state: directory
+    mode: 0700 # default?
+
+- name: allow through firewalld
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    state: enabled
+    permanent: true
+    immediate: true
+  loop:
+    - 2379-2380/tcp
+    - 6443/tcp
+
 - name: enable and start k3s server
-  service:
+  systemd:
     name: k3s-{{ k3s_agent_type }}
     enabled: true
     state: started
+    daemon_reload: true
+
+# this goes at the end because it keeps getting removed for some reason?
+- name: template traefik configuration
+  template:
+    src: traefik.yaml.j2
+    dest: "{{ k3s_manifest_dir }}/traefik.yaml"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: install kubecolor
+  include_tasks: kubecolor.yml
