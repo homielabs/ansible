@@ -55,26 +55,20 @@
 
 # Services
 
-- name: enable sshd on boot
-  service:
-    name: sshd
-    state: started
-    enabled: true
-  when: (lookup('env', 'container') != 'docker')
-
 - name: copy chronyd config for containerized systemd
   copy:
     src: "chronyd"
     dest: "/etc/sysconfig/chronyd"
     mode: 0644
-
   when: (lookup('env', 'container') == 'docker')
 
-- name: enable chronyd
-  service:
-    name: chronyd
-    state: started
-    enabled: true
+- name: enable services
+  include_tasks: systemd_services.yml
+  loop:
+    - primary: sshd
+      fallback: ssh
+    - primary: chronyd
+      fallback: chrony
   when: (lookup('env', 'container') != 'docker')
 
 # telegraf

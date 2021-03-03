@@ -12,7 +12,7 @@
 - name: install duo
   package:
     name: duo_unix
-    state: latest # noqa 403 usually stable
+    state: latest # noqa package-latest usually stable
   when: (lookup('env', 'container') != 'docker')
 
 - name: add duo configuration

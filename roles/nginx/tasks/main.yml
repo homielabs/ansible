@@ -11,7 +11,7 @@
 - name: install nginx
   package:
     name: nginx
-    state: latest # noqa 403 usually always stable
+    state: latest # noqa package-latest usually always stable
 
 - name: set nginx.conf in /etc/nginx/
   copy:

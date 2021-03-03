@@ -1,25 +1,32 @@
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: master
+    rev: v3.4.0
     hooks:
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/psf/black
-    rev: master
+    rev: 20.8b1
     hooks:
       - id: black
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: master
+    rev: v1.26.0
     hooks:
       - id: yamllint
+        args:
+          - -f
+          - parsable
   - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: master
+    rev: v5.0.3a0
     hooks:
       - id: ansible-lint
+        args:
+          - -p
   - repo: https://github.com/Yelp/detect-secrets.git
-    rev: master
+    rev: v1.0.3
     hooks:
       - id: detect-secrets
-        args: ["--baseline", ".secrets.baseline"]
+        args:
+          - "baseline"
+          - ".secrets.baseline"

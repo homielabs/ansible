@@ -1,0 +1,4 @@
+---
+bw_net_port: 3011
+bw_wss_port: 3012
+service: passwords

@@ -9,16 +9,22 @@
 1. spin up machine
 2. add the ansible SSH key to the machine
 3. add machine to inventory
-4. `ansible-playbook site.yml`
+4. setup environment with conda (suggested!)
+
+```bash
+conda env -f environment.yml
+conda activate ansible-2.10
+ansible-playbook site.yml
+```
 
 ### Roles
 
 | role        | function                              | deployed under |
-|-------------|---------------------------------------|----------------|
+| ----------- | ------------------------------------- | -------------- |
 | baseline    | basic config                          |                |
-| bitwarden   | password manager                      | vault          |
+| bitwarden   | password manager                      | passwords      |
 | caddy       | reverse proxy                         |                |
-| docker      | containerization (may install podman) |                |
+| container   | containerization (may install podman) |                |
 | duo         | 2FA SSH                               |                |
 | firewalld   | firewall configuration                |                |
 | letsencrypt | certificates                          |                |
@@ -26,8 +32,6 @@
 | plex        | media server                          | plex           |
 | proxmox     | configures proxmox after install      |                |
 | step-ca     | ACME server                           | ca             |
-
-[Caddy inspo](https://github.com/aeolyus/homelab)
 
 ### Lint
 
@@ -44,15 +48,15 @@ But you should really just install `pre-commit` and let that handle it for you.
 
 ### Special Groups
 
-| group      | meaning                                          |
-|------------|--------------------------------------------------|
+| group      | meaning                                            |
+| ---------- | -------------------------------------------------- |
 | bastion    | something public facing. Gets `fail2ban` installed |
-| homeServer | gets `telegraf` installed and pointed to `influx`    |
+| homeServer | gets `telegraf` installed and pointed to `influx`  |
 
 ### Suggested vars
 
 | var                    | reason                            | required by      |
-|------------------------|-----------------------------------|------------------|
+| ---------------------- | --------------------------------- | ---------------- |
 | domain                 | url, duh                          | revprxy, step-ca |
 | dns_digitalocean_token | DNS validation for wildcard certs | letsencrypt      |
 | email                  | for DNS validation                | letsencrypt      |

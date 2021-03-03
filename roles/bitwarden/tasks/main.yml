@@ -1,7 +1,7 @@
 # thanks, https://github.com/aeolyus/homelab/blob/master/bitwarden/tasks/main.yml
 ---
-- name: install bitwarden docker container
-  podman_image:
+- name: pull bitwarden container image
+  containers.podman.podman_image:
     name: bitwardenrs/server:alpine
     state: present
 
@@ -19,7 +19,6 @@
 - name: announce bitwarden admin token
   debug:
     msg: "Bitwarden admin token: {{ bitwarden_admin_token }}"
-    changed_when: true
   when: not bitwarden_env.stat.exists
 
 - name: ensure bitwarden data directory exists
@@ -41,20 +40,22 @@
     path: /etc/systemd/system/container-bitwarden.service
   register: bitwarden_service
 
+# localhost only so the reverse proxy can handle TLS termination for us
 - name: start bitwarden
-  command: >
-    podman run -d --net=slirp4netns
-    --name bitwarden
-    -v /data/bitwarden/:/data/:Z
-    -p 127.0.0.1:3011:80
-    -p 127.0.0.1:3012:3012
-    --env-file=/data/bitwarden/.env
-    bitwardenrs/server:alpine
+  containers.podman.podman_container:
+    name: bitwarden
+    image: bitwardenrs/server:alpine
+    state: present
+    network: slirp4netns
+    publish:
+      - 127.0.0.1:{{ bw_net_port }}:80
+      - 127.0.0.1:{{ bw_wss_port }}:3012
+    volume:
+      - /data/bitwarden/:/data/:Z
+    cmd_args:
+      - "--env-file=/data/bitwarden/.env"
+    healthcheck: "curl localhost:{{ bw_net_port }}/alive"
   register: bitwarden_command_result
-  failed_when:
-    - bitwarden_command_result.stderr # stderr has output, and
-    # ignore container name already in use error
-    - "'already in use' not in bitwarden_command_result.stderr"
   when: not bitwarden_service.stat.exists
 
 - name: generate systemd service
@@ -68,7 +69,10 @@
     - bitwarden_command_result.changed
 
 - name: stop bitwarden so systemd can take over
-  command: podman container stop bitwarden
+  containers.podman.podman_container:
+    name: bitwarden
+    image: bitwardenrs/server:alpine
+    state: stopped
   when:
     - not bitwarden_service.stat.exists
     - bitwarden_command_result.changed
@@ -85,10 +89,9 @@
     file: roles/caddy/tasks/add_service.yml
     apply:
       vars:
-        service: vault
-        caddyfile_block: |
-          vault.{{ domain }} {
-            reverse_proxy /notifications/hub/negotiate  localhost:3011
-            reverse_proxy /notifications/hub/           localhost:3012
-            reverse_proxy /*                            localhost:3011
+        caddyfile_block: |-
+          passwords.{{ domain }} {
+            reverse_proxy /notifications/hub/negotiate  localhost:{{ bw_net_port }}
+            reverse_proxy /notifications/hub/           localhost:{{ bw_wss_port }}
+            reverse_proxy /*                            localhost:{{ bw_net_port }}
           }

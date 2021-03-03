@@ -18,4 +18,4 @@
 - name: install caddy deps
   dnf:
     name: nss-tools
-    state: latest # noqa 403 usually stable
+    state: latest # noqa package-latest usually stable
