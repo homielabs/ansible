@@ -9,7 +9,7 @@
 1. spin up machine
 2. add the ansible SSH key to the machine
 3. add machine to inventory
-4. setup environment with conda (suggested!)
+4. setup environment with conda (recommended!)
 
 ```bash
 conda env -f environment.yml
@@ -32,6 +32,30 @@ ansible-playbook site.yml
 | plex        | media server                          | plex           |
 | proxmox     | configures proxmox after install      |                |
 | step-ca     | ACME server                           | ca             |
+
+#### Add a Role
+
+Pass `n=<name>` to create a new role from the skeleton with name `<name>`.
+
+```console
+$ make new-role n=new-role
+rm -rf roles/new-role
+mkdir roles/new-role
+cd roles/new-role && git init
+Initialized empty Git repository in /mnt/d/Git/ansible/roles/new-role/.git/
+cd roles && ansible-galaxy role init --offline --role-skeleton skeleton new-role --force
+- Role new-role was created successfully
+```
+
+This Makefile will `exit 1` if you try to create a new role with the same name as one that already exists.
+
+```console
+(ansible-2.10) nickyang:ansible/ (master✗) $ make new-role n=new-role
+role new-role already exists
+make: *** [Makefile:34: new-role] Error 1
+```
+
+It will also pull [ansible_skeleton](https://github.com/guppy0130/ansible_skeleton) if you're missing the skeleton. You can change `$SKELETON` in the Makefile to switch which skeleton gets cloned.
 
 ### Lint
 
