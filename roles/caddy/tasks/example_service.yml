@@ -1,4 +1,16 @@
 ---
+- name: ensure /data/caddy exists
+  file:
+    path: /data/caddy
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+- name: pull latest site
+  unarchive:
+    src: https://nightly.link/guppy0130/website/workflows/main/main/_site.zip
+    dest: /data/caddy
+    remote_src: true
 - name: add service to reverse proxy
   include_tasks:
     file: roles/caddy/tasks/add_service.yml
@@ -7,5 +19,6 @@
         service: example_service
         caddyfile_block: |
           {{ domain }} {
-            respond "hello world"
+            root * /data/caddy
+            file_server
           }

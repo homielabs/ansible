@@ -82,3 +82,12 @@
 - name: fail2ban if public
   import_tasks: fail2ban.yml
   when: "'bastion' in group_names"
+
+# setup /data dir
+
+- name: setup /data dir
+  file:
+    path: /data
+    owner: root
+    group: root
+    mode: 0755
