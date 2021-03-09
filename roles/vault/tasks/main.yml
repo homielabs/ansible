@@ -1,0 +1,72 @@
+---
+- name: distro specific package management
+  include_tasks: "{{ ansible_distribution | lower }}.yml"
+
+- name: install vault
+  package:
+    name: vault
+    state: present
+
+- name: configure vault
+  template:
+    src: vault.hcl.j2
+    dest: "{{ vault_config_location }}"
+
+- name: make folders for vault data
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0700
+    owner: root
+    group: root
+  with_items:
+    - "{{ vault_data_location }}"
+    - "{{ vault_unseal_keys_location }}"
+
+- name: add systemd unit
+  template:
+    src: vault.service.j2
+    dest: /etc/systemd/system/vault.service
+
+- name: start vault with systemd
+  systemd:
+    daemon_reload: true
+    enabled: true
+    state: started
+    name: vault
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        service: vault
+        caddyfile_block: |
+          vault.{{ domain }} {
+            reverse_proxy /* localhost:{{ vault_port }}
+          }
+
+- name: get vault initialization status
+  command: vault operator init -status
+  register: vault_operator_init_status
+  failed_when: vault_operator_init_status.rc == 1
+  changed_when: false # this operation never modifies vault
+  environment:
+    VAULT_ADDR: "http://localhost:{{ vault_port }}"
+
+# vault operator init -status has exit code 0 when initialized
+# vault operator init -status has exit code 1 when errored out
+# vault operator init -status has exit code 2 when not initialized
+- name: include vault-initialize
+  include_tasks:
+    file: vault-initialize.yml
+  when: vault_operator_init_status.rc == 2
+
+# otherwise, you won't have LE certs at the right time
+- name: flush handlers to enable vault.* before vault-ssh-helper
+  meta: flush_handlers
+
+- name: include vault-ssh-helper
+  include_tasks:
+    file: vault-ssh-helper.yml
+  when: vault_ssh_helper_install

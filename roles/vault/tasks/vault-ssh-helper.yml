@@ -1,0 +1,52 @@
+---
+- name: install unzip
+  package:
+    name: unzip
+    state: present
+
+- name: download vault-ssh-helper
+  unarchive:
+    src: https://releases.hashicorp.com/vault-ssh-helper/0.2.1/vault-ssh-helper_{{ vault_ssh_helper_version }}_linux_amd64.zip
+    dest: /usr/local/bin/
+    remote_src: true
+
+- name: make vault-ssh-helper config directory
+  file:
+    path: "{{ vault_ssh_helper_config_location | dirname }}"
+    state: directory
+    mode: g=-rwx,o=-rwx # only the root user may read/enum folder
+
+- name: configure vault-ssh-helper
+  template:
+    src: vault-ssh-helper.hcl.j2
+    dest: "{{ vault_ssh_helper_config_location }}"
+    validate: vault-ssh-helper -verify-only -config %s
+
+- name: add vault-ssh-helper to sshd
+  blockinfile:
+    path: /etc/pam.d/sshd
+    insertafter: "@include common-auth"
+    block: |
+      auth requisite pam_exec.so quiet expose_authtok log=/tmp/vaultssh.log /usr/local/bin/vault-ssh-helper -config={{ vault_ssh_helper_config_location }}
+      auth optional pam_unix.so not_set_pass use_first_pass nodelay
+
+- name: comment out common-auth stanza
+  lineinfile:
+    path: /etc/pam.d/sshd
+    regexp: "^(#)?@include common-auth"
+    line: "#@include common-auth"
+    state: present
+
+- name: configure sshd config
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^(#)?{{ item.regexp }}"
+    line: "{{ item.regexp }} {{ item.value }}"
+    state: present
+  with_items:
+    - regexp: ChallengeResponseAuthentication
+      value: "yes"
+    - regexp: UsePAM
+      value: "yes"
+    - regexp: PasswordAuthentication
+      value: "no"

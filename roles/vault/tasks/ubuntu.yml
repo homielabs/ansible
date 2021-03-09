@@ -1,0 +1,11 @@
+---
+- name: add hashicorp key (ubuntu)
+  apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+
+# this step might take a while
+- name: add vault repository (ubuntu)
+  apt_repository:
+    repo: deb https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main
+    state: present
+    update_cache: true

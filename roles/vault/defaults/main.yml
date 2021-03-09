@@ -1,0 +1,12 @@
+---
+vault_location: "/data/vault"
+vault_data_location: "{{ vault_location }}/data"
+vault_unseal_keys_location: "{{ vault_location }}/unseal_keys"
+vault_config_location: "/etc/vault.d/vault.hcl"
+vault_port: 8200
+# include the disable_mlock stanza?
+disable_mlock: false
+# vault ssh helper
+vault_ssh_helper_install: true
+vault_ssh_helper_version: 0.2.1
+vault_ssh_helper_config_location: "/etc/vault-ssh-helper.d/config.hcl"

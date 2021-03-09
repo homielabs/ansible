@@ -1,0 +1,33 @@
+---
+# only initialize if not initialize. This should not stand alone.
+- name: initialize vault
+  command: vault operator init -format=json
+  register: vault_init
+  environment:
+    VAULT_ADDR: "http://localhost:{{ vault_port }}"
+
+- name: parse vault operator init
+  set_fact:
+    vault_init: "{{ vault_init.stdout | from_json }}"
+  environment:
+    VAULT_ADDR: "http://localhost:{{ vault_port }}"
+
+# write unseal_keys_hex[N] to /vault/data/unseal_key_N for N in 0..5
+- name: write unseal keys
+  copy:
+    dest: "{{ vault_unseal_keys_location }}/unseal_key_{{ item.0 }}"
+    content: "{{ item.1 }}"
+    mode: 0600
+  with_indexed_items: "{{ vault_init.unseal_keys_hex }}"
+
+- name: write root key
+  copy:
+    dest: "{{ vault_location }}/root.key"
+    content: "{{ vault_init.root_token }}"
+    mode: 0600
+
+- name: unseal vault
+  command: vault operator unseal {{ item }}
+  with_items: "{{ vault_init.unseal_keys_hex }}"
+  environment:
+    VAULT_ADDR: "http://localhost:{{ vault_port }}"
