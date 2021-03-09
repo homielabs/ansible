@@ -1,0 +1,33 @@
+---
+name: deploy
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: ansible-2.10
+          environment-file: environment.yml
+          python-version: 3.9
+          auto-activate-base: false
+      - name: get secrets from vault
+        uses: hashicorp/vault-action@v2.1.2
+        with:
+          url: https://vault.inthemainfra.me
+          token: ${{ secrets.VaultToken }}
+          secrets: secrets/ansible/github_key | SSH_PRIV_KEY
+      - name: run ansible
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: site.yml
+          directory: ./
+          key: ${{ secrets.SSH_PRIV_KEY }}
+          options: |
+            -vvvvv
