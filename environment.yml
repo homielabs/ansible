@@ -7,3 +7,5 @@ dependencies:
       - ansible==3.0.0
       - ansible-lint==5.0.2
       - pre-commit==2.10.1
+      - pipdeptree==2.0.0
+      - detect-secrets==1.0.3

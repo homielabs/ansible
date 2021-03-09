@@ -1,4 +1,6 @@
 ---
+exclude_paths:
+  - .github/
 warn_list:
   - load-failure # Failed to load or parse file
   - experimental # all rules tagged as experimental (901)
