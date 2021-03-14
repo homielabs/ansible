@@ -1,0 +1,16 @@
+---
+factorio_version: latest
+factorio_rcon_enabled: false
+factorio_default_port:
+  - 0.0.0.0:34197:34197/udp
+factorio_rcon_port: 0.0.0.0:27105:27105/tcp
+factorio_ports_expose: "{{ factorio_default_port + [factorio_rcon_port] if factorio_rcon_enabled else factorio_default_port }}"
+
+factorio_settings_name: "server_name"
+factorio_settings_description: ""
+factorio_settings_tags: []
+factorio_settings_username: ""
+factorio_settings_token: ""
+factorio_settings_game_password: ""
+factorio_settings_auto_pause: true
+factorio_old_save: true # we want to use an old save

@@ -1,0 +1,8 @@
+---
+- name: enable firewalld ports
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    immediate: true
+    permanent: true
+    state: enabled
+  loop: "{{ firewalld_ports }}"

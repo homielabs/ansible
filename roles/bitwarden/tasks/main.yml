@@ -45,7 +45,7 @@
   containers.podman.podman_container:
     name: bitwarden
     image: "{{ bw_container }}"
-    state: present
+    state: started
     network: slirp4netns
     publish:
       - 127.0.0.1:{{ bw_net_port }}:80

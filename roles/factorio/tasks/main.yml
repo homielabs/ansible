@@ -1,0 +1,42 @@
+---
+- name: pull factorio:{{ factorio_version }} container image
+  containers.podman.podman_image:
+    name: factoriotools/factorio:{{ factorio_version }}
+    state: present
+
+- name: ensure factorio data directory exists
+  file:
+    path: /data/factorio
+    state: directory
+    mode: 0755
+
+# export directly on host
+# do not rely on systemd, because it sends sigterms for some reason
+- name: start factorio
+  containers.podman.podman_container:
+    name: factorio
+    image: factoriotools/factorio:{{ factorio_version }}
+    state: started
+    network: slirp4netns
+    publish: "{{ factorio_ports_expose }}"
+    volume:
+      - /data/factorio/:/factorio/:Z
+    restart_policy: always
+
+- name: configure settings
+  template:
+    src: server-settings.json.j2
+    dest: /data/factorio/config/server-settings.json
+
+- name: upload saves
+  copy:
+    src: oldsave.zip
+    dest: /data/factorio/saves/oldsave.zip
+  when: "factorio_old_save | bool"
+
+- name: enable ports in firewalld
+  import_tasks: roles/firewalld/handlers/ports.yml
+  vars:
+    firewalld_ports:
+      - 34197/udp
+      - 27015/tcp

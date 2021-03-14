@@ -1,6 +1,6 @@
 ---
 - name: Master Playbook
-  hosts: all
+  hosts: inthemainfra.me
   become: true
   roles:
     # yamllint disable rule:comments-indentation
@@ -9,6 +9,7 @@
     # - caddy
     # - container
     # - duo
+    - factorio
     # - firewalld
     # - grafana
     # - innernet
@@ -20,6 +21,7 @@
     # - plex
     # - proxmox
     # - step_ca
+    # - swap
     # - vault
     # yamllint enable rule:comments-indentation
   handlers:

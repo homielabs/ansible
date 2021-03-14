@@ -14,8 +14,11 @@
 ```bash
 conda env -f environment.yml
 conda activate ansible-2.10
-ansible-playbook site.yml
+ansible-playbook -i inventory site.yml
 ```
+
+* If you're in WSL2 and `ansible.cfg` is world-writable, you'll need to explicitly export `ANSIBLE_CONFIG` to point at the config file.
+* Sometimes, the inventory bugs out and you'll have to explicitly pass `-i inventory` to pick up variables.
 
 ### Roles
 
@@ -33,6 +36,7 @@ ansible-playbook site.yml
 | plex        | media server                          | plex           |
 | proxmox     | configures proxmox after install      |                |
 | step-ca     | ACME server                           | ca             |
+| swap        | add swapfile                          |                |
 | vault       | Hashicorp Vault                       | vault          |
 
 #### Add a Role
@@ -61,16 +65,9 @@ It will also pull [ansible_skeleton](https://github.com/guppy0130/ansible_skelet
 
 ### Lint
 
-Lots of ways to manually lint (good for debug/verbose):
-
 ```bash
-ansible-lint roles/*  # ignore the 901 errors if you run this
-ansible-lint inventory/**/*.yml  # there's no inventory type for ansible-lint
-ansible-lint site.yml  # you'll need to uncomment the roles
-yamllint .
+pre-commit run --all-files
 ```
-
-But you should really just install `pre-commit` and let that handle it for you.
 
 ### Special Groups
 

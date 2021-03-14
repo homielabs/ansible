@@ -1,0 +1,9 @@
+---
+- name: Factorio
+  hosts: factorio_servers
+  become: true
+  roles:
+    - factorio
+  handlers:
+    - import_tasks: roles/caddy/handlers/main.yml
+    - import_tasks: roles/firewalld/handlers/main.yml
