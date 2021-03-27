@@ -41,6 +41,7 @@ ifdef n
 	mkdir roles/$(n)
 	cd roles/$(n) && git init
 	cd roles && ansible-galaxy role init --offline --role-skeleton skeleton $(n) --force
+	cd roles/$(n) && rm -rf .git
 else
 	@echo "Incorrect usage. Pass n="
 	@echo
