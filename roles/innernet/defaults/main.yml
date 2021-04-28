@@ -1,0 +1,13 @@
+---
+innernet_version: 1.2.0
+innernet_port: 51820
+
+# server things
+innernet_server_base: "magic-base"
+innernet_server_base_cidr: "10.42.0.0/16"
+# manual subnetting
+innernet_server_groups:
+  - name: "humans"
+    cidr: "10.42.1.0/24"
+  - name: "aliens"
+    cidr: "10.42.2.0/24"

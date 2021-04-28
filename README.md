@@ -27,6 +27,7 @@ ansible-playbook site.yml
 | container   | containerization (may install podman) |                |
 | duo         | 2FA SSH                               |                |
 | firewalld   | firewall configuration                |                |
+| innernet    | networking via wireguard              |                |
 | letsencrypt | certificates                          |                |
 | nginx       | reverse proxy                         |                |
 | plex        | media server                          | plex           |

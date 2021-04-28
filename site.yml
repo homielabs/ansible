@@ -10,6 +10,7 @@
     # - docker
     # - duo
     # - firewalld
+    - innernet
     # - k3s
     # - letsencrypt
     # - plex

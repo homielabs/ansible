@@ -36,8 +36,13 @@ test:
 # check to see if skeleton exists too, otherwise go ahead and clone it
 new-role:
 ifdef n
+# figure out if the correct environment is activated.
+	@(echo "$(CONDA_DEFAULT_ENV)" | grep "ansible" > /dev/null) || (echo "Please activate the ansible env first!" && exit 1)
+# then see if the role already exists
 	@if [ -d "roles/$(n)" ]; then echo "role $(n) already exists" && exit 1; fi
+# figure out where the skeleton is first
 	@if ! [ -d "roles/skeleton" ]; then echo "missing roles/skeleton, fetching from git" && cd roles && git clone $(SKELETON) skeleton; fi
+# then make the role!
 	mkdir roles/$(n)
 	cd roles/$(n) && git init
 	cd roles && ansible-galaxy role init --offline --role-skeleton skeleton $(n) --force
