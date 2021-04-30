@@ -17,5 +17,5 @@
 
 ### Notes
 
-* Uses the [bitwarden_rs](https://github.com/dani-garcia/bitwarden_rs) image
+* Uses the [vaultwarden](https://github.com/dani-garcia/vaultwarden) image
 * Assumes caddy as the default reverse proxy

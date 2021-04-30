@@ -2,7 +2,7 @@
 ---
 - name: pull bitwarden container image
   containers.podman.podman_image:
-    name: bitwardenrs/server:alpine
+    name: "{{ bw_container }}"
     state: present
 
 - name: check bitwarden env file
@@ -44,7 +44,7 @@
 - name: start bitwarden
   containers.podman.podman_container:
     name: bitwarden
-    image: bitwardenrs/server:alpine
+    image: "{{ bw_container }}"
     state: present
     network: slirp4netns
     publish:
@@ -71,7 +71,7 @@
 - name: stop bitwarden so systemd can take over
   containers.podman.podman_container:
     name: bitwarden
-    image: bitwardenrs/server:alpine
+    image: "{{ bw_container }}"
     state: stopped
   when:
     - not bitwarden_service.stat.exists
