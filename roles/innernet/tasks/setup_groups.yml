@@ -1,0 +1,23 @@
+---
+- name: "check for existence of group {{ item.name }}"
+  # sorry, this is kind of ugly and skips the abstraction barriers.
+  # it's because the server doesn't have a way of showing what CIDRs/names are
+  # already used.
+  # if this returns anything, you must skip - both (name) or (ip, prefix) must
+  # be unique, so any output on matching by name means you can't reuse that
+  # name.
+  command: >-
+    sqlite3 /var/lib/innernet-server/{{ innernet_server_base }}.db
+    "SELECT * FROM cidrs WHERE name == '{{ item.name }}';"
+  register: "_innernet_check_output"
+  # this is a read-only op and therefore never makes changes
+  changed_when: false
+- name: "add innernet group {{ item.name }}"
+  command: >-
+    innernet-server add-cidr
+      --cidr {{ item.cidr }}
+      --name {{ item.name }}
+      --parent {{ innernet_server_base }}
+      --yes
+      {{ innernet_server_base }}
+  when: "_innernet_check_output.stdout | default('') | length == 0"

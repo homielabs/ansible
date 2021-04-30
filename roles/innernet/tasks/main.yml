@@ -1,0 +1,13 @@
+---
+- name: "install wireguard"
+  package:
+    name: "wireguard"
+    state: "present"
+
+- name: "install innernet"
+  apt:
+    deb: "https://github.com/tonarino/innernet/releases/download/v{{ innernet_version }}/innernet_{{ innernet_version }}_amd64.deb"
+
+- name: "add server tasks if required"
+  include_tasks: "server.yml"
+  when: "'innernet_servers' in group_names"

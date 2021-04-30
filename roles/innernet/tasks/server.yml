@@ -1,0 +1,40 @@
+---
+- name: "install innernet-server"
+  apt:
+    deb: "https://github.com/tonarino/innernet/releases/download/v{{ innernet_version }}/innernet-server_{{ innernet_version }}_amd64.deb"
+
+- name: "open ports for innernet"
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    immediate: true
+    permanent: true
+    state: enabled
+  loop:
+    - "{{ innernet_port }}/tcp"
+    - "{{ innernet_port }}/udp"
+
+- name: "get public ip addr"
+  uri:
+    url: http://ifconfig.me/ip
+    return_content: true
+  register: ip_response
+
+- name: "setup new innernet server base"
+  command:
+    cmd: >-
+      innernet-server new
+        --external-endpoint {{ ip_response.content }}:{{ innernet_port }}
+        --listen-port {{ innernet_port }}
+        --network-cidr {{ innernet_server_base_cidr }}
+        --network-name {{ innernet_server_base }}
+    creates: "/var/lib/innernet-server/{{ innernet_server_base }}.db"
+
+- name: "setup innernet groups"
+  include_tasks: "setup_groups.yml"
+  loop: "{{ innernet_server_groups }}"
+
+- name: "activate + persist service"
+  service:
+    name: "innernet-server@{{ innernet_server_base }}.service"
+    state: started
+    enabled: true
