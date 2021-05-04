@@ -1,7 +1,7 @@
 ---
 - name: install plex docker container
   podman_image:
-    name: linuxserver/plex
+    name: docker.io/linuxserver/plex
     state: present
 
 - name: ensure plex data directory and children exists
@@ -13,6 +13,7 @@
     - /data/plex/
     - /data/plex/config/
     - /data/plex/movies/
+    - /data/plex/music/
     - /data/plex/tv/
 
 - name: check to see if systemd service file exists already
