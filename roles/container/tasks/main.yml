@@ -1,4 +1,7 @@
 ---
+- name: include distro-specific pre-work
+  include_tasks: "{{ ansible_distribution }}.yml"
+
 - name: install docker/podman
   package:
     name: "{{ container_package }}"
@@ -11,6 +14,22 @@
   when:
     - container_package == 'docker'
     - lookup('env', 'container') != 'docker'
+
+# https://www.notion.so/yanghome/Home-Proxmox-a2bddaee846d4d75b146d43447202abe#ebc9398b4521421f94d6dbc73b8396c6
+- name: fix kubic install
+  block:
+    - name: "fixup mount_program in storage.conf"
+      replace:
+        path: "/etc/containers/storage.conf"
+        regexp: "^#(.*mount_program = .*)"
+        replace: '\1'
+    - name: "fixup containers.conf"
+      copy:
+        src: "containers.conf"
+        dest: "/etc/containers/containers.conf"
+  when:
+    - fixup_kubic_config is defined
+    - fixup_kubic_config
 
 - name: enable/start docker service
   service:
