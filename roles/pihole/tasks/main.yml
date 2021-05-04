@@ -1,0 +1,41 @@
+---
+- name: "download installer"
+  get_url:
+    url: "https://install.pi-hole.net"
+    dest: "/tmp/pihole-install.sh"
+    mode: "0755"
+
+- name: "do some networking math"
+  set_fact:
+    net_mask: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}"
+
+- name: "make parents for pihole config"
+  file:
+    path: "/etc/pihole"
+    state: "directory"
+    recurse: true
+
+- name: "setup configuration for unattended install"
+  template:
+    src: "setupVars.conf"
+    dest: "/etc/pihole/setupVars.conf"
+
+- name: "install pihole"
+  command: "/tmp/pihole-install.sh --unattended"
+
+- name: "ensure pip exists"
+  apt:
+    name: python3-pip
+    update_cache: yes
+    state: present
+
+- name: "install pexpect to remove password"
+  pip:
+    name: pexpect
+    state: present
+
+- name: "remove password"
+  expect:
+    command: "pihole -a -p"
+    responses:
+      "Enter.*": ""

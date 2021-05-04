@@ -10,9 +10,10 @@
     # - docker
     # - duo
     # - firewalld
-    - innernet
+    # - innernet
     # - k3s
     # - letsencrypt
+    # - pihole
     # - plex
     # - proxmox
     # - step_ca
