@@ -1,0 +1,24 @@
+---
+- name: include distro-specific commands
+  include_tasks: "{{ ansible_distribution }}.yml"
+
+- name: install grafana
+  package:
+    name: grafana
+    state: present
+
+- name: enable and run grafana service
+  service:
+    name: grafana-server
+    state: started
+    enabled: true
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        caddyfile_block: |-
+          grafana.{{ domain }} {
+            reverse_proxy localhost:3000
+          }
