@@ -47,6 +47,7 @@ ifdef n
 	cd roles/$(n) && git init
 	cd roles && ansible-galaxy role init --offline --role-skeleton skeleton $(n) --force
 	cd roles/$(n) && rm -rf .git
+	cd roles/$(n) && rm -rf COPYING .gitignore .pre-commit-config.yaml
 else
 	@echo "Incorrect usage. Pass n="
 	@echo
