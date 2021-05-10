@@ -54,3 +54,12 @@ else
 	@echo "Example: make new-role n=new-role"
 	@echo
 endif
+
+# setup our conda env. You'll want to run this once on installs, but that should
+# be about it, unless you need to update as well. This will pull/rebase/
+# autostash as necessary.
+setup:
+	@conda update -n base -c defaults conda -y --quiet
+	@conda env create --force --quiet --file environment.yml
+	@git pull --rebase --autostash --recurse-submodules
+	@echo "activate your env with `conda activate ansible-2.10`"

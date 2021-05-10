@@ -1,0 +1,22 @@
+---
+- name: setup oxauth
+  containers.podman.podman_container:
+    name: oxauth
+    image: gluufederation/oxauth:4.2.3_03
+    env:
+      GLUU_CONFIG_CONSUL_HOST: consul
+      GLUU_SECRET_VAULT_HOST: vault
+      GLUU_LDAP_URL: ldap:1636
+    network: gluu
+    # nginx container may need this to be accessible, but it seems like it also
+    # only checks localhost:8081, which is concerning in the container context
+    ports:
+      - "8081:8080"
+    # tell oxauth to reach nginx at nginx
+    # the JSON dict is because we want this key to be interpolated
+    etc_hosts: '{ "{{ inventory_hostname }}": "{{ ansible_default_ipv4.address }}" }'
+    volumes:
+      - /data/vault/vault_role_id.txt:/etc/certs/vault_role_id
+      - /data/vault/vault_secret_id.txt:/etc/certs/vault_secret_id
+    memory: 512m
+  register: oxauth_container

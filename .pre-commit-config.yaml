@@ -7,24 +7,24 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 21.5b0
     hooks:
       - id: black
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.26.0
+    rev: v1.26.1
     hooks:
       - id: yamllint
         args:
           - -f
           - parsable
   - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: v5.0.3a0
+    rev: v5.0.8
     hooks:
       - id: ansible-lint
         args:
           - -p
   - repo: https://github.com/Yelp/detect-secrets.git
-    rev: v1.0.3
+    rev: v1.1.0
     hooks:
       - id: detect-secrets
         args:

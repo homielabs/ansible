@@ -1,0 +1,19 @@
+---
+- name: setup consul
+  containers.podman.podman_container:
+    name: consul
+    image: consul
+    # you may not need the UI in prod
+    command: agent -server -bootstrap -ui
+    volumes:
+      - /data/consul/data:/consul/data
+    memory: 512m
+    recreate: true
+    # map it out for debugging
+    ports:
+      - "8500:8500"
+    env:
+      CONSUL_BIND_INTERFACE: eth0
+      CONSUL_CLIENT_INTERFACE: eth0
+    hostname: consul-1
+    network: gluu

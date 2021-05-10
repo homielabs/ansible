@@ -1,0 +1,213 @@
+---
+- name: copy vault gluu policy
+  copy:
+    src: vault_gluu_policy.hcl
+    dest: /data/vault/vault_gluu_policy.hcl
+
+- name: setup vault
+  containers.podman.podman_container:
+    name: vault
+    image: vault
+    command: vault server -config=/vault/config
+    volumes:
+      - /data/vault/config:/vault/config
+      - /data/vault/data:/vault/data
+      - /data/vault/logs:/vault/logs
+      - /data/vault/vault_gluu_policy.hcl:/vault/config/policy.hcl
+    memory: 512m
+    network: gluu
+    # for debugging. you'll check for the presence of keys later to determine this
+    recreate: true
+    # also for debugging, map it out so you can access it
+    ports:
+      - "8200:8200"
+    cap_add:
+      - IPC_LOCK
+    env:
+      # you should not do this! But having troubles with LXC + this, so it's
+      # here to stay
+      VAULT_DISABLE_MLOCK: true
+      VAULT_REDIRECT_INTERFACE: eth0
+      VAULT_CLUSTER_INTERFACE: eth0
+      VAULT_ADDR: http://0.0.0.0:8200
+      # you need to declare this for debugging, otherwise it's false by default
+      VAULT_UI: true
+      VAULT_LOCAL_CONFIG: >-
+        {
+          "backend":
+            { "consul": { "address": "consul:8500", "path": "vault/" } },
+          "listener":
+            { "tcp": { "address": "0.0.0.0:8200", "tls_disable": 1 } },
+        }
+  register: vault_container
+
+- name: wait on vault to be ready
+  wait_for:
+    host: "{{ vault_container.container.NetworkSettings.Networks.gluu.IPAddress }}"
+    port: 8200
+
+# generate an app role + secret for containers
+- name: initialize vault
+  command:
+    cmd: >-
+      podman exec -it vault
+        vault operator init
+          -key-shares=1
+          -key-threshold=1
+          -recovery-shares=1
+          -recovery-threshold=1
+          -format=json
+  register: vault_keys
+
+- name: parse vault_keys.stdout as json
+  set_fact:
+    vault_keys: "{{ vault_keys.stdout | from_json }}"
+
+# note the on purpose posix newline
+# also, the renamed loop_var is because this tasks file may be run in the
+# context of the include loop in main.yml
+- name: write vault key and token to disk
+  copy:
+    content: "{{ my_item.key }}\n"
+    dest: "{{ my_item.path }}"
+  loop_control:
+    loop_var: my_item
+  loop:
+    - key: "{{ vault_keys.root_token }}"
+      path: "/data/vault/root_token"
+    - key: "{{ vault_keys.unseal_keys_b64[0] }}"
+      path: "/data/vault/unseal_key"
+
+# unlock vault
+- name: unlock vault
+  command:
+    cmd: >-
+      podman exec -it vault
+        vault operator unseal
+          {{ vault_keys.unseal_keys_b64[0] }}
+
+- name: setup kv secrets engine at secret/
+  command:
+    cmd: >-
+      podman exec -it
+        -e VAULT_TOKEN="{{ vault_keys.root_token }}"
+        -e VAULT_ADDR='http://127.0.0.1:8200'
+        vault
+        vault secrets enable -path=secret kv
+
+- name: gluu policy setup in vault
+  block:
+    - name: check to see if vault already has the gluu policy
+      command:
+        cmd: >-
+          podman exec -it
+            -e VAULT_TOKEN="{{ vault_keys.root_token }}"
+            -e VAULT_ADDR='http://127.0.0.1:8200'
+            vault
+            vault policy list
+      register: vault_gluu_policy
+      changed_when: false # read only op
+
+    - name: add the gluu policy to vault
+      command:
+        cmd: >-
+          podman exec -it
+            -e VAULT_TOKEN="{{ vault_keys.root_token }}"
+            -e VAULT_ADDR='http://127.0.0.1:8200'
+            vault
+            vault policy write gluu /vault/config/policy.hcl
+      when: "'gluu' not in vault_gluu_policy.stdout"
+
+- name: approle auth with vault
+  block:
+    - name: check to see if vault already has approle
+      command:
+        cmd: >-
+          podman exec -it
+            -e VAULT_TOKEN="{{ vault_keys.root_token }}"
+            -e VAULT_ADDR='http://127.0.0.1:8200'
+            vault
+            vault auth list -format=json
+      register: vault_auth_list
+
+    - name: parse vault_auth_list as json
+      set_fact:
+        vault_auth_list: "{{ vault_auth_list.stdout | from_json }}"
+
+    - name: add approle to vault
+      command:
+        cmd: >-
+          podman exec -it
+            -e VAULT_TOKEN="{{ vault_keys.root_token }}"
+            -e VAULT_ADDR='http://127.0.0.1:8200'
+            vault
+            vault auth enable approle
+
+    - name: vault write auth/approle/role/gluu policies=gluu
+      command:
+        cmd: >-
+          podman exec -it
+            -e VAULT_TOKEN="{{ vault_keys.root_token }}"
+            -e VAULT_ADDR='http://127.0.0.1:8200'
+            vault
+            vault write auth/approle/role/gluu policies=gluu
+
+    - name: generate the approle token
+      command:
+        cmd: >-
+          podman exec -it
+            -e VAULT_TOKEN="{{ vault_keys.root_token }}"
+            -e VAULT_ADDR='http://127.0.0.1:8200'
+            vault
+            vault write auth/approle/role/gluu
+            secret_id_ttl=0
+            token_num_uses=0
+            token_ttl=20m
+            token_max_ttl=30m
+            secret_id_num_uses=0
+
+    # the following two podman commands are run without -it because doing so
+    # will introduce extra escape characters to stdout, which is not desired.
+    # by presenting as without a TTY, no colors/escape chars are required, so
+    # none will be output; the result is that stdout that comes out is pure text
+    - name: read back role-id from approle
+      command:
+        cmd: >-
+          podman exec
+            -e VAULT_TOKEN="{{ vault_keys.root_token }}"
+            -e VAULT_ADDR='http://127.0.0.1:8200'
+            vault
+            vault read -field=role_id auth/approle/role/gluu/role-id
+      register: gluu_vault_role_id
+
+    - name: write role-id to file
+      copy:
+        content: "{{ gluu_vault_role_id.stdout }}\n"
+        dest: /data/vault/vault_role_id.txt
+
+    # technically, write and get back a value
+    # the -f is because we want to get a secretID issued against the approle?
+    # https://www.vaultproject.io/docs/auth/approle#:~:text=Get%20a%20SecretID%20issued%20against%20the%20AppRole
+    - name: read back secret-id from approle
+      command:
+        cmd: >-
+          podman exec
+            -e VAULT_TOKEN="{{ vault_keys.root_token }}"
+            -e VAULT_ADDR='http://127.0.0.1:8200'
+            vault
+            vault write -f -field=secret_id auth/approle/role/gluu/secret-id
+      register: gluu_vault_secret_id
+
+    - name: write secret-id to file
+      copy:
+        content: "{{ gluu_vault_secret_id.stdout }}\n"
+        dest: /data/vault/vault_secret_id.txt
+    # curl --request POST --data-binary "@/etc/certs/curl_example.json" vault:8200/v1/auth/approle/login
+    # - name: write test curl data to file
+    #   copy:
+    #     content: |-
+    #       {
+    #         "role_id": "{{ gluu_vault_role_id.stdout }}",
+    #         "secret_id": "{{ gluu_vault_secret_id.stdout }}"
+    #       }
+    #     dest: /data/vault/curl_example.json

@@ -1,0 +1,53 @@
+---
+- name: pull the container image
+  containers.podman.podman_image:
+    name: "{{ item.image }}"
+  loop: "{{ ldap_container_images }}"
+
+- name: stop any existing containers
+  containers.podman.podman_container:
+    image: "{{ item.image }}"
+    name: "{{ item.name }}"
+    state: absent
+  loop: "{{ ldap_container_images }}"
+
+- name: nuke data dirs
+  file:
+    path: "/data"
+    state: absent
+
+- name: setup volume dirs
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "/data/consul/data"
+    - "/data/vault/config"
+    - "/data/vault/data"
+    - "/data/vault/logs"
+    - "/data/gluu-config"
+    - "/data/opendj/config"
+    - "/data/opendj/ldif"
+    - "/data/opendj/logs"
+    - "/data/opendj/db"
+    - "/data/opendj/backup"
+
+# this way, consul + vault can refer to each other via their hostname
+# without going out onto the LAN
+- name: create a network for dns
+  containers.podman.podman_network:
+    name: gluu
+
+- name: include {{ item }}
+  include_tasks:
+    file: "{{ item }}.yml"
+  loop:
+    - consul
+    - vault
+    - registrator
+    - gluu-config
+    - nginx
+    - opendj
+    - persistence
+    - oxauth
+    - oxtrust
