@@ -1,0 +1,20 @@
+---
+- name: setup nginx
+  containers.podman.podman_container:
+    name: nginx
+    image: gluufederation/nginx:4.2.3_01
+    env:
+      GLUU_CONFIG_CONSUL_HOST: consul
+      GLUU_SECRET_VAULT_HOST: vault
+    network: gluu
+    # these should go all the way outside. Don't bother attempting to reverse
+    # proxy this, because it's actually pointlessly difficult.
+    # if you're having trouble accessing this, try rebooting...
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+    volumes:
+      - /data/vault/vault_role_id.txt:/etc/certs/vault_role_id
+      - /data/vault/vault_secret_id.txt:/etc/certs/vault_secret_id
+    memory: 512m
+  register: nginx_container

@@ -1,0 +1,31 @@
+---
+# these are the latest stable. there are no convenient tags.
+# there are also some extras required for gluu
+ldap_container_images:
+  - name: oxauth
+    image: gluufederation/oxauth:4.2.3_03
+  - name: persistence
+    image: gluufederation/persistence:4.2.3_03
+  - name: oxtrust_backend
+    image: gluufederation/oxtrust:4.2.3_02
+  - name: ldap
+    image: gluufederation/opendj:4.2.3_02
+  - name: config-init
+    image: gluufederation/config-init:4.2.3_03
+  - name: nginx
+    image: gluufederation/nginx:4.2.3_01
+  - name: registrator
+    image: gliderlabs/registrator:master
+  - name: vault
+    image: vault
+  - name: consul
+    image: consul
+
+# min 6 char
+# 1+ uppercase char
+# 1+ lowercase char
+# 1+ digit
+# 1+ special char
+gluu_admin_password: Password1!
+gluu_ldap_password: Password1!
+gluu_email: gluu@{{ ansible_hostname }}.{{ domain }}

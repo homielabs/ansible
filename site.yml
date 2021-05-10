@@ -12,6 +12,7 @@
     # - firewalld
     # - innernet
     # - k3s
+    # - ldap
     # - letsencrypt
     # - pihole
     # - plex

@@ -1,0 +1,23 @@
+---
+- name: setup oxtrust
+  containers.podman.podman_container:
+    # this name is required by nginx, for some reason.
+    # that, or export 8082 all the way out.
+    name: oxtrust_backend
+    image: gluufederation/oxtrust:4.2.3_03
+    env:
+      GLUU_CONFIG_CONSUL_HOST: consul
+      GLUU_SECRET_VAULT_HOST: vault
+      GLUU_OXAUTH_BACKEND: oxauth:8080
+      GLUU_LDAP_URL: ldap:1636
+    network: gluu
+    ports:
+      - "8082:8080"
+    # technically, it just can't be localhost/127.0.1.x
+    # tell oxtrust to reach itself at the container addr
+    etc_hosts: '{ "{{ inventory_hostname }}": "{{ ansible_default_ipv4.address }}" }'
+    volumes:
+      - /data/vault/vault_role_id.txt:/etc/certs/vault_role_id
+      - /data/vault/vault_secret_id.txt:/etc/certs/vault_secret_id
+    memory: 512m
+  register: oxtrust_container

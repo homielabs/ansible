@@ -1,0 +1,36 @@
+---
+- name: setup opendj/ldap
+  containers.podman.podman_container:
+    name: ldap
+    image: gluufederation/opendj:4.2.3_02
+    env:
+      GLUU_CONFIG_CONSUL_HOST: consul
+      GLUU_SECRET_VAULT_HOST: vault
+      # GLUU_CERT_ALT_NAME: ldap
+      GLUU_LDAP_ADVERTISE_ADDR: ldap
+      # GLUU_PERSISTENCE_TYPE: ldap
+      GLUU_SERF_ADVERTISE_ADDR: ldap:7946
+      # GLUU_PERSISTENCE_LDAP_MAPPING: default
+      GLUU_LDAP_AUTO_REPLICATE: false
+    ports:
+      # admin on 4444?
+      - "0.0.0.0:1636:1636"
+    network: gluu
+    volumes:
+      - /data/vault/vault_role_id.txt:/etc/certs/vault_role_id
+      - /data/vault/vault_secret_id.txt:/etc/certs/vault_secret_id
+      - /data/opendj/config:/opt/opendj/config
+      - /data/opendj/ldif:/opt/opendj/ldif
+      - /data/opendj/logs:/opt/opendj/logs
+      - /data/opendj/db:/opt/opendj/db
+      - /data/opendj/backup:/opt/opendj/bak
+    memory: 512m
+  register: opendj_container
+
+# not really sure what to look for between the first and second launches of
+# opendj inside the container. just wait a little bit and eventually this file
+# should show up, I guess...?
+- name: wait for opendj to activate
+  wait_for:
+    delay: 5
+    path: /data/opendj/logs/server.pid

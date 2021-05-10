@@ -1,0 +1,35 @@
+---
+# write this now, because it goes missing at some point and we're not sure why
+# configurator to break. maybe you should also update the config.json on disk?
+# {'LockIndex': 0, 'Key': 'gluu/config/ldap_init_host', 'Flags': 0, 'Value': None, 'CreateIndex': 66, 'ModifyIndex': 201}
+- name: write a key that configurator will miss (ldap_init_host)
+  command:
+    cmd: >-
+      podman exec
+        -e CONSUL_HTTP_ADDR=consul:8500
+        consul
+        consul kv put gluu/config/ldap_init_host ldap
+  register: gluu_write_config_ldap_init_host
+
+# persistence is what generates data for ldap backend.
+# you need to do this before starting up oxauth/oxtrust.
+# this should take ~3m or so (but oxauth/oxtrust are good to go at about the
+# ~70s mark)
+- name: setup persistence
+  containers.podman.podman_container:
+    name: persistence
+    image: gluufederation/persistence:4.2.3_03
+    env:
+      GLUU_CONFIG_ADAPTER: consul
+      GLUU_CONFIG_CONSUL_HOST: consul
+      GLUU_SECRET_ADAPTER: vault
+      GLUU_SECRET_VAULT_HOST: vault
+      GLUU_PERSISTENCE_TYPE: ldap
+      GLUU_LDAP_URL: ldap:1636
+      GLUU_PERSISTENCE_LDAP_MAPPING: default
+    network: gluu
+    volumes:
+      - /data/vault/vault_role_id.txt:/etc/certs/vault_role_id
+      - /data/vault/vault_secret_id.txt:/etc/certs/vault_secret_id
+    memory: 512m
+  register: persistence_container

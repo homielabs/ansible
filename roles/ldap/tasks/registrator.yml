@@ -1,0 +1,26 @@
+---
+- name: enable podman_remote service
+  service:
+    name: podman.socket
+    enabled: true
+    state: started
+
+- name: setup registrator
+  containers.podman.podman_container:
+    name: registrator
+    image: gliderlabs/registrator:master
+    # pass an explicit flag to this if you want to only select containers that
+    # have a certain tag.
+    command: >-
+      -internal
+      -cleanup
+      -resync 30
+      -retry-attempts 5
+      -retry-interval 10
+      consul://consul:8500
+    # look, I'm not sure if you can really do this, but it seems to work, so I'm
+    # not going to complain...
+    volumes:
+      - /run/podman/podman.sock:/tmp/docker.sock
+    memory: 512m
+    network: gluu

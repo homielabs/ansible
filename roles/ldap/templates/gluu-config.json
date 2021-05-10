@@ -1,0 +1,10 @@
+{
+  "hostname": "{{ inventory_hostname }}",
+  "country_code": "US",
+  "state": "CA",
+  "city": "San Francisco",
+  "admin_pw": "{{ gluu_admin_password }}",
+  "ldap_pw": "{{ gluu_ldap_password }}",
+  "email": "{{ gluu_email }}",
+  "org_name": "yang.home"
+}

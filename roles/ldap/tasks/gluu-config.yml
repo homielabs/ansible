@@ -1,0 +1,35 @@
+---
+- name: copy gluu-config.json
+  template:
+    src: gluu-config.json
+    dest: /data/gluu-config/generate.json
+
+- name: setup gluu configurator
+  containers.podman.podman_container:
+    name: config-init
+    image: gluufederation/config-init:4.2.3_03
+    env:
+      GLUU_CONFIG_CONSUL_HOST: consul
+      GLUU_SECRET_VAULT_HOST: vault
+    network: gluu
+    # if you have these ports enabled, podman may keep holding onto these ports
+    # even if the container is stopped.
+    # ports:
+    #   - "80:80"
+    #   - "443:443"
+    volumes:
+      - /data/gluu-config/:/opt/config-init/db/
+      - /data/vault/vault_role_id.txt:/etc/certs/vault_role_id
+      - /data/vault/vault_secret_id.txt:/etc/certs/vault_secret_id
+    memory: 512m
+    command: load
+
+# config.json is written first
+# then secrets are saved to vault
+# then secret.json is written
+# therefore, check for secret.json to ensure that secrets are written in vault
+# if this times out, that means it was unable to write secrets to vault
+# check the logs `podman logs -f config-init` to figure out why
+- name: wait for config-init to generate config
+  wait_for:
+    path: /data/gluu-config/secret.json
