@@ -1,10 +1,6 @@
 ---
-- name: set domain to ca
-  set_fact:
-    image_tag: 0.14.5-rc.3.cullACMEOrders # TODO: fix when upstream updates. This version has reverse proxy support.
-
 - name: install step-ca docker container
-  podman_image:
+  containers.podman.podman_image:
     name: smallstep/step-ca:{{ image_tag }}
     state: present
 
@@ -19,103 +15,107 @@
     path: /data/step-ca/.env
   register: step_ca_env
 
-- name: generate step-ca admin token
-  set_fact:
-    step_ca_admin_token: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters') }}"
+- name: generate admin token, root/intermediate cert + install certs
+  block:
+    - name: generate step-ca admin token
+      set_fact:
+        step_ca_admin_token: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters') }}"
+
+    - name: write step-ca password
+      lineinfile:
+        path: /data/step-ca/.env
+        line: "{{ step_ca_admin_token }}"
+        create: true
+        mode: 0644
+
+    - name: generate root/intermediate certs
+      containers.podman.podman_container:
+        name: cert_generator
+        image: smallstep/step-ca:{{ image_tag }}
+        command: >-
+          step ca init
+            --name=ca.{{ domain }}
+            --dns=ca.{{ domain }},{{ ansible_default_ipv4.address }},localhost
+            --address=0.0.0.0:8443
+            --provisioner=jwk
+            --provisioner-password-file=/home/step/.env
+            --password-file=/home/step/.env
+        volume:
+          - /data/step-ca/:/home/step/:Z
+
+    - name: wait for certs to be generated
+      wait_for:
+        path: /data/step-ca/certs/root_ca.crt
+
   when: not step_ca_env.stat.exists
 
-- name: write step-ca password
-  lineinfile:
-    path: /data/step-ca/.env
-    line: "{{ step_ca_admin_token }}"
-    create: true
-    mode: 0600
-  when: not step_ca_env.stat.exists
+- name: determine if certs were generated
+  stat:
+    path: /data/step-ca/certs/root_ca.crt
+  register: root_ca_cert
+
+- name: assert certs were generated
+  assert:
+    that:
+      - root_ca_cert.stat.exists
+
+# this way you always do it!
+- name: include distro-specific cert management tasks
+  include_tasks: "{{ ansible_distribution | lower }}-certs.yml"
+
+- name: add the ACME provisioner to the config
+  containers.podman.podman_container:
+    name: cert_generator
+    image: smallstep/step-ca:{{ image_tag }}
+    command: >-
+      step ca provisioner add acme -type=acme
+    rm: true
+    volume:
+      - /data/step-ca/:/home/step/:Z
 
 - name: check to see if systemd service file exists already
   stat:
     path: /etc/systemd/system/container-step-ca.service
   register: step_ca_service
 
-- name: generate root/intermediate certs
-  command:
-    cmd: >-
-      podman run -d
-      --rm
-      -v /data/step-ca/:/home/step/:Z
-      smallstep/step-ca:{{ image_tag }}
-      step ca init
-      -name='ca.{{ domain }}'
-      -dns='ca.{{ domain }}',{{ ansible_default_ipv4.address }},localhost
-      -address=':8443'
-      -provisioner=jwk
-      -provisioner-password-file=/home/step/.env
-      -password-file=/home/step/.env
-    creates: /data/step-ca/certs/root_ca.crt
+- name: configure ACME server service
+  block:
+    - name: start ACME server
+      containers.podman.podman_container:
+        name: step-ca
+        image: smallstep/step-ca:{{ image_tag }}
+        command: >-
+          step-ca
+            -password-file=/home/step/.env
+            /home/step/config/ca.json
+        # network: slirp4netns
+        publish:
+          - "0.0.0.0:8443:8443"
+        volume:
+          - /data/step-ca/:/home/step/:Z
+      register: step_ca_command_result
 
-# the following two might not be necessary, but sometimes it bugs out without it, so
-- name: nuke existing root cert
-  file:
-    path: /etc/pki/ca-trust/source/anchors/step-ca.root.pem
-    state: absent
+    - name: generate systemd service
+      shell:
+        cmd: >-
+          podman generate systemd --name step-ca >
+          /etc/systemd/system/container-step-ca.service
+        creates: /etc/systemd/system/container-step-ca.service
+      when:
+        - step_ca_command_result.changed
 
-- name: reset ca-bundle
-  command: update-ca-trust extract
-
-- name: add the root to host trust
-  file:
-    src: /data/step-ca/certs/root_ca.crt
-    dest: /etc/pki/ca-trust/source/anchors/step-ca.root.pem
-    state: link
-
-- name: update ca-bundle
-  command: update-ca-trust extract
-
-- name: add the ACME provisioner
-  command: >-
-    podman run -d
-    --rm
-    -v /data/step-ca/:/home/step/:Z
-    smallstep/step-ca:{{ image_tag }}
-    step ca provisioner add acme -type=acme
-
-- name: start ACME server
-  command: >-
-    podman run -d --net=slirp4netns
-    --name step-ca
-    -v /data/step-ca/:/home/step/:Z
-    -p 127.0.0.1:8443:8443
-    smallstep/step-ca:{{ image_tag }}
-    step-ca
-    -password-file=/home/step/.env
-    /home/step/config/ca.json
-  register: step_ca_command_result
-  failed_when:
-    - step_ca_command_result.stderr
-    # ignore container name already in use errors
-    - "'already in use' not in step_ca_command_result.stderr"
+    - name: stop step-ca so systemd can take over
+      command: podman container stop step-ca
+      when:
+        - step_ca_command_result.changed
   when: not step_ca_service.stat.exists
 
-- name: generate systemd service
-  shell:
-    cmd: >-
-      podman generate systemd --name step-ca >
-      /etc/systemd/system/container-step-ca.service
-    creates: /etc/systemd/system/container-step-ca.service
-  when:
-    - not step_ca_service.stat.exists
-    - step_ca_command_result.changed
-
-- name: stop step-ca so systemd can take over
-  command: podman container stop step-ca
-  when:
-    - not step_ca_service.stat.exists
-    - step_ca_command_result.changed
-
+# restart because otherwise badger messes up, and bonus is we restart reverse
+# proxy for new root certs
 - name: start systemd container-step-ca service
   service:
     name: container-step-ca
-    state: restarted # otherwise badger messes up, and bonus is we restart reverse proxy for new root certs
+    state: restarted
     enabled: true
     daemon-reload: true
 
@@ -125,7 +125,12 @@
     apply:
       vars:
         service: ca
+        # the tls::ca section is to avoid a possible chicken-egg
+        # it may not be necessary
         caddyfile_block: |
           ca.{{ domain }} {
             reverse_proxy /* https://localhost:8443
+            tls {
+              ca https://localhost:8443/acme/acme/directory
+            }
           }

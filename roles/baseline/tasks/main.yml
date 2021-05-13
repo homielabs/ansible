@@ -13,6 +13,7 @@
       - git
       - chrony
       - stow
+      - gnupg
     state: present
 
 - name: distro specific packages
@@ -90,4 +91,5 @@
     path: /data
     owner: root
     group: root
+    state: directory
     mode: 0755

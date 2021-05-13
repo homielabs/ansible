@@ -1,0 +1,18 @@
+---
+# the file MUST end in .crt to be picked up by update-ca-certificates
+- name: nuke existing root cert
+  file:
+    path: /usr/local/share/ca-certificates/step-ca.root.crt
+    state: absent
+
+- name: reset ca-bundle
+  command: "update-ca-certificates"
+
+- name: add the root to host trust
+  file:
+    src: /data/step-ca/certs/root_ca.crt
+    dest: /usr/local/share/ca-certificates/step-ca.root.crt
+    state: link
+
+- name: update ca-bundle
+  command: "update-ca-certificates"
