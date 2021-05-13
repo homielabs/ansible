@@ -24,7 +24,7 @@
       - /data/opendj/logs:/opt/opendj/logs
       - /data/opendj/db:/opt/opendj/db
       - /data/opendj/backup:/opt/opendj/bak
-    memory: 512m
+    memory: 2g
   register: opendj_container
 
 # not really sure what to look for between the first and second launches of
