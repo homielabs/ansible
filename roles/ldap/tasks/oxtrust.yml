@@ -19,5 +19,5 @@
     volumes:
       - /data/vault/vault_role_id.txt:/etc/certs/vault_role_id
       - /data/vault/vault_secret_id.txt:/etc/certs/vault_secret_id
-    memory: 512m
+    memory: 780m
   register: oxtrust_container
