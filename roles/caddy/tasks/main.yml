@@ -51,12 +51,20 @@
   import_tasks: example_service.yml
   when: deploy_example_service
 
+- name: figure out if firewalld exists
+  command:
+    cmd: command -v firewalld
+  register: firewalld_exists
+  changed_when: false
+  failed_when: false
+
 - name: enable http/s in firewalld
   import_tasks: roles/firewalld/handlers/main.yml
   vars:
     firewalld_services:
       - http
       - https
+  when: firewalld_exists.rc == 0
 
 - name: enable caddy service
   service:

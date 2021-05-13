@@ -1,0 +1,17 @@
+---
+- name: nuke existing root cert
+  file:
+    path: /etc/pki/ca-trust/source/anchors/step-ca.root.pem
+    state: absent
+
+- name: reset ca-bundle
+  command: "update-ca-trust extract"
+
+- name: add the root to host trust
+  file:
+    src: /data/step-ca/certs/root_ca.crt
+    dest: /etc/pki/ca-trust/source/anchors/step-ca.root.pem
+    state: link
+
+- name: update ca-bundle
+  command: "update-ca-trust extract"
