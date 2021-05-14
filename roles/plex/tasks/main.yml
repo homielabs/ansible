@@ -1,6 +1,6 @@
 ---
 - name: install plex docker container
-  podman_image:
+  containers.podman.podman_image:
     name: docker.io/linuxserver/plex
     state: present
 
@@ -21,36 +21,38 @@
     path: /etc/systemd/system/container-plex.service
   register: plex_service
 
-- name: start plex
-  command: >-
-    podman run -d --net=slirp4netns
-    --name plex
-    -v /data/plex/config:/config:Z
-    -v /data/plex/movies:/movies:Z
-    -v /data/plex/tv:/tv:Z
-    -e PUID=0
-    -e PGID=0
-    -e VERSION=docker
-    -p 127.0.0.1:32400:32400
-    linuxserver/plex
-  register: plex_command_result
-  failed_when:
-    - plex_command_result.stderr
-    # ignore container name already in use errors
-    - "'already in use' not in plex_command_result.stderr"
+- name: setup systemd service
+  block:
+    - name: start plex
+      containers.podman.podman_container:
+        name: plex
+        image: linuxserver/plex
+        volume:
+          - "/data/plex/config:/config:Z"
+          - "/data/plex/movies:/movies:Z"
+          - "/data/plex/music:/music:Z"
+          - "/data/plex/tv:/tv:Z"
+        env:
+          PUID: 0
+          PGID: 0
+          VERSION: latest
+        publish:
+          - "32400:32400"
+        network: "{{ 'slirp4netns' if slirp4netns else omit }}"
+      register: plex_command_result
+
+    - name: generate systemd service
+      shell:
+        cmd: >-
+          podman generate systemd --name plex >
+          /etc/systemd/system/container-plex.service
+        creates: /etc/systemd/system/container-plex.service
+      when: plex_command_result.changed
+
+    - name: stop plex so systemd can take over
+      command: podman container stop plex
+      when: plex_command_result.changed
   when: not plex_service.stat.exists
-
-- name: generate systemd service
-  shell:
-    cmd: >-
-      podman generate systemd --name plex >
-      /etc/systemd/system/container-plex.service
-    creates: /etc/systemd/system/container-plex.service
-  when: not plex_service.stat.exists and plex_command_result.changed
-
-- name: stop plex so systemd can take over
-  command: podman container stop plex
-  when: not plex_service.stat.exists and plex_command_result.changed
 
 - name: start systemd container-plex service
   service:
