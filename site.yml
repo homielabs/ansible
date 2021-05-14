@@ -10,6 +10,7 @@
     # - docker
     # - duo
     # - firewalld
+    # - grafana
     # - innernet
     # - k3s
     # - ldap

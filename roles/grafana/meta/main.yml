@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: guppy0130
+  description: Deploy Grafana
+  license: GPLv3
+  min_ansible_version: 2.10
+dependencies:
+  # could be a list of `role: role_name` objects. common ones: caddy, container
+  - role: caddy
