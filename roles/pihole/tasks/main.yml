@@ -26,7 +26,7 @@
 - name: "ensure pip exists"
   apt:
     name: python3-pip
-    update_cache: yes
+    update_cache: true
     state: present
 
 - name: "install pexpect to remove password"
