@@ -23,7 +23,7 @@
 
 - name: setup systemd service
   block:
-    - name: start plex
+    - name: start plex (no hw transcode)
       containers.podman.podman_container:
         name: plex
         image: linuxserver/plex
@@ -39,7 +39,34 @@
         publish:
           - "32400:32400"
         network: "{{ 'slirp4netns' if slirp4netns else omit }}"
-      register: plex_command_result
+      register: plex_no_transcode_result
+      when: not plex_nvidia_transcode
+
+    - name: start plex (hw transcode)
+      command: >-
+        podman run -d
+          --name plex
+          -v /data/plex/config:/config:Z
+          -v /data/plex/movies:/movies:Z
+          -v /data/plex/music:/music:Z
+          -v /data/plex/tv:/tv:Z
+          -e PUID=0
+          -e PGID=0
+          -e VERSION=latest
+          -p 32400:32400
+          -e NVIDIA_VISIBLE_DEVICES=all
+          --security-opt=label=disable
+          --hooks-dir=/usr/share/containers/oci/hooks.d/
+          linuxserver/plex
+      register: plex_transcode_result
+      when: plex_nvidia_transcode
+
+    # since the second register will always overwrite the first if they had the
+    # same variable name
+    - name: fixup var names
+      set_fact:
+        plex_command_result: "{{ (plex_transcode_result.changed) |
+          ternary(plex_transcode_result, plex_no_transcode_result) }}"
 
     - name: generate systemd service
       shell:
