@@ -15,6 +15,7 @@
     # - k3s
     # - ldap
     # - letsencrypt
+    # - nvidia_container_runtime
     # - pihole
     # - plex
     # - proxmox
