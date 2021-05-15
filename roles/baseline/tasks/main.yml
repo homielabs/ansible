@@ -1,6 +1,9 @@
 ---
 - name: import distro variables
-  include_vars: "{{ ansible_distribution }}.yml"
+  include_vars: "{{ ansible_distribution | lower }}.yml"
+
+- name: include distro-specific pre-tasks (updating pkg cache)
+  include_tasks: "{{ ansible_distribution | lower }}.yml"
 
 - name: install baseline packages
   package:
@@ -36,13 +39,13 @@
 
 # config
 
+- name: install locale
+  community.general.locale_gen:
+    name: en_US.UTF-8
+    state: present
+
 - name: set locale
   command: localectl set-locale LANG=en_US.utf8
-  when: (lookup('env', 'container') != 'docker')
-
-# - name: set timezone
-#   shell: "{{ update_timezone_command }}"
-#   when: (lookup('env', 'container') != 'docker')
 
 - name: set timezone
   community.general.timezone:
