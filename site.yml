@@ -7,7 +7,7 @@
     # - baseline
     # - bitwarden
     # - caddy
-    # - docker
+    # - container
     # - duo
     # - firewalld
     # - grafana
