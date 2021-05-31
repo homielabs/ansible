@@ -11,6 +11,7 @@
     # - duo
     # - firewalld
     # - grafana
+    # - influxdb
     # - innernet
     # - k3s
     # - ldap

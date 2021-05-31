@@ -1,0 +1,75 @@
+---
+- name: ensure data directories exist
+  file:
+    name: "{{ influxdb_folder }}"
+    state: directory
+  loop_control:
+    loop_var: influxdb_folder
+  loop:
+    - "/data/influxdb/config"
+    - "/data/influxdb/data"
+
+- name: download influxdb container
+  containers.podman.podman_image:
+    name: influxdb
+
+- name: test for systemd service
+  stat:
+    path: /etc/systemd/system/container-influxdb.service
+  register: influxdb_service
+
+- name: generate systemd service if required
+  block:
+    - name: setup container
+      containers.podman.podman_container:
+        name: influxdb
+        image: influxdb
+        volume:
+          - /data/influxdb/data:/var/lib/influxdb2
+          - /data/influxdb/config:/etc/influxdb2
+        publish:
+          - 8086:8086
+        env:
+          INFLUXD_HTTP_BIND_ADDRESS: 0.0.0.0:8086
+          DOCKER_INFLUXDB_INIT_MODE: setup
+          DOCKER_INFLUXDB_INIT_BUCKET: telegraf
+          DOCKER_INFLUXDB_INIT_HOST: "influxdb.{{ domain }}"
+          DOCKER_INFLUXDB_INIT_ORG: "{{ domain }}"
+          DOCKER_INFLUXDB_INIT_USERNAME: admin
+          DOCKER_INFLUXDB_INIT_PASSWORD: password
+      register: influxdb_command_result
+
+    - name: generate systemd service
+      shell:
+        cmd: >-
+          podman generate systemd --name influxdb >
+          /etc/systemd/system/container-influxdb.service
+        creates: /etc/systemd/system/container-influxdb.service
+      when: influxdb_command_result.changed
+
+    - name: stop influxdb so systemd can take over
+      containers.podman.podman_container:
+        name: influxdb
+        state: stopped
+      when: influxdb_command_result.changed
+
+  when:
+    - not influxdb_service.stat.exists
+
+- name: start systemd container-influxdb service
+  service:
+    name: container-influxdb
+    state: restarted
+    enabled: true
+    daemon-reload: true
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        service: influxdb
+        caddyfile_block: |
+          influxdb.{{ domain }} {
+            reverse_proxy /* http://localhost:8086
+          }

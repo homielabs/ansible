@@ -1,0 +1,57 @@
+---
+- name: ensure data directories exist
+  file:
+    name: "{{ promtail_folder }}"
+    state: directory
+    mode: 0777
+  loop_control:
+    loop_var: promtail_folder
+  loop:
+    - "/data/promtail/config"
+
+- name: copy promtail config
+  template:
+    src: promtail.yml.j2
+    dest: /data/promtail/config/config.yml
+
+- name: download promtail container
+  containers.podman.podman_image:
+    name: grafana/promtail
+
+- name: test for systemd service
+  stat:
+    path: /etc/systemd/system/container-promtail.service
+  register: promtail_service
+
+- name: generate systemd service if required
+  block:
+    - name: setup container
+      containers.podman.podman_container:
+        name: promtail
+        image: promtail
+        volume: "{{ promtail_log_mount }}"
+      register: promtail_command_result
+
+    - name: generate systemd service
+      shell:
+        cmd: >-
+          podman generate systemd --name promtail >
+          /etc/systemd/system/container-promtail.service
+        creates: /etc/systemd/system/container-promtail.service
+      when: promtail_command_result.changed
+
+    - name: stop promtail so systemd can take over
+      containers.podman.podman_container:
+        name: promtail
+        state: stopped
+      when: promtail_command_result.changed
+
+  when:
+    - not promtail_service.stat.exists
+
+- name: start systemd container-promtail service
+  service:
+    name: container-promtail
+    state: restarted
+    enabled: true
+    daemon-reload: true
