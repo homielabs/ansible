@@ -1,0 +1,61 @@
+---
+- name: pull calibre container image
+  containers.podman.podman_image:
+    name: "{{ calibre_container }}"
+    state: present
+
+- name: ensure data directory exists
+  file:
+    path: /data/books/
+    state: directory
+
+- name: check to see if systemd service file exists already
+  stat:
+    path: /etc/systemd/system/container-calibre.service
+  register: calibre_service
+
+# localhost only so the reverse proxy can handle TLS termination for us
+- name: start calibre
+  containers.podman.podman_container:
+    name: calibre
+    image: "{{ calibre_container }}"
+    state: present
+    # network: slirp4netns
+    publish:
+      # guac goes out
+      - 0.0.0.0:8080:8080
+      # don't bother exporting the webui bc we have calibre-web
+    volume:
+      - /data/books/:/config/:Z
+    env:
+      PUID: 0
+      GUID: 0
+      TZ: America/Los_Angeles
+  register: calibre_command_result
+  when: not calibre_service.stat.exists
+
+- name: generate systemd service
+  shell:
+    cmd: >-
+      podman generate systemd --name calibre >
+      /etc/systemd/system/container-calibre.service
+    creates: /etc/systemd/system/container-calibre.service
+  when:
+    - not calibre_service.stat.exists
+    - calibre_command_result.changed
+
+- name: stop calibre so systemd can take over
+  containers.podman.podman_container:
+    name: calibre
+    image: "{{ calibre_container }}"
+    state: stopped
+  when:
+    - not calibre_service.stat.exists
+    - calibre_command_result.changed
+
+- name: start systemd container-calibre service
+  service:
+    name: container-calibre
+    state: started
+    enabled: true
+    daemon-reload: true
