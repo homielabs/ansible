@@ -1,0 +1,77 @@
+---
+- name: pull jackett container image
+  containers.podman.podman_image:
+    name: "{{ jackett_container }}"
+    state: present
+
+- name: ensure jackett data directory exists
+  file:
+    path: /data/jackett/
+    state: directory
+    mode: 0755
+
+- name: check to see if systemd service file exists already
+  stat:
+    path: /etc/systemd/system/container-jackett.service
+  register: jackett_service
+
+# localhost only so the reverse proxy can handle TLS termination for us
+- name: start jackett
+  containers.podman.podman_container:
+    name: jackett
+    image: "{{ jackett_container }}"
+    state: present
+    # network: slirp4netns
+    publish:
+      # export this all the way out because sonarr can't pick up custom certs
+      - 0.0.0.0:9117:9117
+    volume:
+      # jackett config
+      - /data/jackett/:/config/:Z
+      # for .torrent files
+      - /data/plex/torrent/torrentfiles:/downloads/:Z
+      # custom certs
+      - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates:ro
+    env:
+      PUID: 0
+      PGID: 0
+      TZ: America/Los_Angeles
+  register: jackett_command_result
+  when: not jackett_service.stat.exists
+
+- name: generate systemd service
+  shell:
+    cmd: >-
+      podman generate systemd --name jackett >
+      /etc/systemd/system/container-jackett.service
+    creates: /etc/systemd/system/container-jackett.service
+  when:
+    - not jackett_service.stat.exists
+    - jackett_command_result.changed
+
+- name: stop jackett so systemd can take over
+  containers.podman.podman_container:
+    name: jackett
+    image: "{{ jackett_container }}"
+    state: stopped
+  when:
+    - not jackett_service.stat.exists
+    - jackett_command_result.changed
+
+- name: start systemd container-jackett service
+  service:
+    name: container-jackett
+    state: started
+    enabled: true
+    daemon-reload: true
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        service: jackett
+        caddyfile_block: |-
+          jackett.{{ domain }} {
+            reverse_proxy /* localhost:9117
+          }

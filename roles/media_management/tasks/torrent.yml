@@ -1,0 +1,62 @@
+---
+- name: install torrent ppa
+  apt_repository:
+    repo: "{{ ppa_item }}"
+  loop_control:
+    loop_var: ppa_item
+  loop:
+    - ppa:transmissionbt/ppa
+
+# latest because we want it to match everywhere, I guess?
+- name: install torrent client # noqa: package-latest
+  apt:
+    pkg:
+      - transmission-cli
+      - transmission-common
+      - transmission-daemon
+    state: latest
+
+- name: setup data dirs
+  file:
+    # write it under plex/ to save ourselves a copy between filesystems?
+    path: "/data/plex/torrent/{{ torrent_folders }}"
+    state: directory
+  loop_control:
+    loop_var: torrent_folders
+  loop:
+    - torrentfiles
+    - incomplete
+    - download
+
+- name: stop torrent service
+  service:
+    name: transmission-daemon
+    state: stopped
+
+- name: copy torrent config
+  copy:
+    src: transmission.json
+    dest: /etc/transmission-daemon/settings.json
+
+- name: ensure torrent services are running
+  systemd:
+    name: "{{ torrent_service }}"
+    state: restarted
+    enabled: true
+    daemon_reload: true
+    daemon_reexec: true
+  loop_control:
+    loop_var: torrent_service
+  loop:
+    - transmission-daemon
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        service: torrent
+        caddyfile_block: |-
+          torrent.{{ domain }} {
+            reverse_proxy * localhost:9091
+          }
