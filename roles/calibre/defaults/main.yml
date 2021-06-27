@@ -1,0 +1,4 @@
+---
+calibre_container: linuxserver/calibre
+service: calibre
+calibre_web_container: linuxserver/calibre-web

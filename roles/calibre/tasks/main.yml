@@ -1,0 +1,6 @@
+---
+- name: include calibre tasks
+  include_tasks: "{{ item }}.yml"
+  loop:
+    - calibre
+    - calibre-web
