@@ -1,0 +1,41 @@
+#!/bin/sh
+
+# https://github.com/k3s-io/k3s/blob/57041f02392eb7c7c3c72423b98dbb6717d2da55/install.sh#L644-L689
+
+set -x
+[ $(id -u) -eq 0 ] || exec sudo $0 $@
+{{ k3s_install_location }}/k3s-killall.sh
+if which systemctl; then
+    systemctl disable k3s-{{ k3s_agent_type }}
+    systemctl reset-failed k3s-{{ k3s_agent_type }}
+    systemctl daemon-reload
+fi
+if which rc-update; then
+    rc-update delete k3s-{{ k3s_agent_type }} default
+fi
+rm -f {{ k3s_systemd_config_location }}/k3s-{{ k3s_agent_type }}.service
+# rm -f ${FILE_K3S_ENV}
+remove_uninstall() {
+    rm -f {{ k3s_install_location }}/k3s-uninstall.sh
+}
+trap remove_uninstall EXIT
+if (ls {{ k3s_systemd_config_location }}/k3s*.service || ls /etc/init.d/k3s*) >/dev/null 2>&1; then
+    set +x; echo 'Additional k3s services installed, skipping uninstall of k3s'; set -x
+    exit
+fi
+for cmd in kubectl crictl ctr; do
+    if [ -L {{ k3s_install_location }}/$cmd ]; then
+        rm -f {{ k3s_install_location }}/$cmd
+    fi
+done
+rm -rf /etc/rancher/k3s
+rm -rf /run/k3s
+rm -rf /run/flannel
+rm -rf /var/lib/rancher/k3s
+rm -rf /var/lib/kubelet
+rm -f {{ k3s_install_location }}/k3s
+rm -f {{ k3s_install_location }}/k3s-killall.sh
+if type yum >/dev/null 2>&1; then
+    yum remove -y k3s-selinux
+    rm -f /etc/yum.repos.d/rancher-k3s-common*.repo
+fi

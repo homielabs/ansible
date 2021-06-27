@@ -1,0 +1,13 @@
+---
+- name: unpack kubecolor
+  unarchive:
+    src: https://github.com/dty1er/kubecolor/releases/download/v0.0.9/kubecolor_0.0.9_Linux_x86_64.tar.gz
+    dest: "{{ k3s_install_location }}"
+    exclude:
+      - README.md
+      - LICENSE
+    owner: root
+    group: root
+    mode: 0700
+    remote_src: true
+    creates: "{{ k3s_install_location }}/kubecolor"
