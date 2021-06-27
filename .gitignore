@@ -5,3 +5,4 @@ host_vars/
 hosts
 .vscode/
 roles/skeleton
+inventory/
