@@ -1,3 +1,4 @@
+# vim: ft=jinja-properties
 # {{ ansible_managed }}
 
 # Global tags can be specified here in key="value" format.
@@ -49,7 +50,8 @@
   precision = ""
 
   ## Override default hostname, if empty use os.Hostname()
-  hostname = ""
+  # this is a templated value because containers have a random hash
+  hostname = "{{ ansible_hostname }}"
   ## If set to true, do no set the "host" tag in the telegraf agent.
   omit_hostname = false
 
@@ -60,15 +62,17 @@
 
 
 # Configuration for sending metrics to InfluxDB
-[[outputs.influxdb]]
+[[outputs.influxdb_v2]]
   ## The full HTTP or UDP URL for your InfluxDB instance.
   ## Multiple URLs can be specified for a single cluster, only ONE of the
   ## urls will be written to each interval.
   urls = {{ influxdb_urls | to_json }}
 
-  ## The target database for metrics; will be created as needed.
-  ## For UDP url endpoint database needs to be configured on server side.
-  database = "telegraf"
+  # auth token
+  token = "{{ influxdb_token }}"
+  organization = "{{ domain }}"
+  bucket = "telegraf"
+  tls_cert = "/etc/telegraf/telegraf/root_ca.crt"
 
 
 ###############################################################################
@@ -95,9 +99,11 @@
   ## Ignore mount points by filesystem type.
   ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
 
+  [inputs.disk.tagpass]
+    fstype = ["ext4", "zfs"]
+
   [inputs.disk.tagdrop]
     device = ["/mapper*"]
-    path = ["/mnt2*", "/export*"]
 
 # Read metrics about disk IO by device
 [[inputs.diskio]]
@@ -219,7 +225,7 @@
   use_sudo = true
 {% endif %}
 
-{% if 'proxmox' in group_names %}
+{% if 'proxmox' in inventory_hostname %}
 # Monitor sensors, requires lm-sensors package
 [[inputs.sensors]]
   ## Remove numbers from field names.
@@ -231,31 +237,11 @@
 
 # Read metrics from storage devices supporting S.M.A.R.T.
 [[inputs.smart]]
-{% endif %}
 
-{% if 'localhost' in inventory_hostname %}
-# Query given DNS server and gives statistics
-[[inputs.dns_query]]
-  ## servers to query
-  # TODO: dynamic
-  servers = ["192.168.1.36"]
-
-  ## Network is the network protocol name.
-  # network = "udp"
-
-  ## Domains or subdomains to query.
-  # TODO: dynamic
-  domains = ["pihole.home", "grafana.home", "proxmox.home", "rockstor.home"]
-
-  ## Query record type.
-  ## Posible values: A, AAAA, CNAME, MX, NS, PTR, TXT, SOA, SPF, SRV.
-  # record_type = "A"
-
-  ## Dns server port.
-  # port = 53
-
-  ## Query timeout in seconds.
-  # timeout = 2
+# zfs stats, please
+[[inputs.zfs]]
+poolMetrics = true
+datasetMetrics = true
 
 # Read current weather and forecasts data from openweathermap.org
 [[inputs.openweathermap]]
@@ -281,10 +267,28 @@
   ## Query interval; OpenWeatherMap updates their weather data every 10
   ## minutes.
   interval = "10m"
+{% endif %}
 
-# Reads metrics from a SSL certificate
-[[inputs.x509_cert]]
-  ## List certificate sources
-  # TODO: dynamic
-  sources = ["https://auth.home:443", "https://bitwarden.home:443", "https://dc01.home:443", "https://gitlab.home:443", "https://grafana.home:443", "https://jupyter.home:443", "https://proxmox.home:443", "https://rockstor.home:443", "https://wiki.home:443"]
+{% if 'pihole' in inventory_hostname %}
+# Query given DNS server and gives statistics
+[[inputs.dns_query]]
+  ## servers to query
+  servers = ["{{ ansible_default_ipv4.address }}"]
+
+  ## Network is the network protocol name.
+  # network = "udp"
+
+  ## Domains or subdomains to query.
+  domains = {{ telegraf.dns_urls | to_json }}
+
+  ## Query record type.
+  ## Posible values: A, AAAA, CNAME, MX, NS, PTR, TXT, SOA, SPF, SRV.
+  # record_type = "A"
+
+  ## Dns server port.
+  # port = 53
+
+  ## Query timeout in seconds.
+  # timeout = 2
+
 {% endif %}

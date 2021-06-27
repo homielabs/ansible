@@ -1,0 +1,79 @@
+---
+- name: ensure data directories exist
+  file:
+    name: "{{ loki_folder }}"
+    state: directory
+    mode: 0777
+  loop_control:
+    loop_var: loki_folder
+  loop:
+    - "/data/loki/data/logs"
+    - "/data/loki/data/index"
+    - "/data/loki/data/boltdb-cache"
+    - "/data/loki/data/compact"
+    - "/data/loki/config"
+
+- name: copy loki config
+  copy:
+    src: loki.yml
+    dest: /data/loki/config/local-config.yaml
+
+- name: download loki container
+  containers.podman.podman_image:
+    name: grafana/loki
+
+- name: test for systemd service
+  stat:
+    path: /etc/systemd/system/container-loki.service
+  register: loki_service
+
+- name: generate systemd service if required
+  block:
+    - name: setup container
+      containers.podman.podman_container:
+        name: loki
+        image: loki
+        volume:
+          # data
+          - /data/loki/data:/loki
+          # config
+          - /data/loki/config:/etc/loki
+        publish:
+          - 3100:3100
+        healthcheck: curl localhost:3100/ready
+      register: loki_command_result
+
+    - name: generate systemd service
+      shell:
+        cmd: >-
+          podman generate systemd --name loki >
+          /etc/systemd/system/container-loki.service
+        creates: /etc/systemd/system/container-loki.service
+      when: loki_command_result.changed
+
+    - name: stop loki so systemd can take over
+      containers.podman.podman_container:
+        name: loki
+        state: stopped
+      when: loki_command_result.changed
+
+  when:
+    - not loki_service.stat.exists
+
+- name: start systemd container-loki service
+  service:
+    name: container-loki
+    state: restarted
+    enabled: true
+    daemon-reload: true
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        service: loki
+        caddyfile_block: |
+          loki.{{ domain }} {
+            reverse_proxy /* http://localhost:3100
+          }

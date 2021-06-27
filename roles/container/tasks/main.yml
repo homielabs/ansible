@@ -1,6 +1,6 @@
 ---
 - name: include distro-specific pre-work
-  include_tasks: "{{ ansible_distribution }}.yml"
+  include_tasks: "{{ ansible_distribution | lower }}.yml"
 
 - name: install docker/podman
   package:

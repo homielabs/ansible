@@ -1,0 +1,70 @@
+---
+- name: ensure data directories exist
+  file:
+    name: "/data/telegraf/config"
+    state: directory
+
+- name: template out telegraf config
+  template:
+    src: telegraf.conf.j2
+    dest: /data/telegraf/config/telegraf.conf
+
+- name: link root cert to telegraf
+  file:
+    src: /usr/local/share/ca-certificates/root_ca.crt
+    dest: /data/telegraf/config/root_ca.crt
+    state: link
+
+- name: download telegraf container
+  containers.podman.podman_image:
+    name: telegraf
+
+- name: test for systemd service
+  stat:
+    path: /etc/systemd/system/container-telegraf.service
+  register: telegraf_service
+
+- name: generate systemd service if required
+  block:
+    - name: setup container
+      containers.podman.podman_container:
+        name: telegraf
+        image: telegraf
+        volume:
+          - /:/hostfs:ro
+          - /data/telegraf/config:/etc/telegraf:ro
+        env:
+          HOST_ETC: /hostfs/etc
+          HOST_PROC: /hostfs/proc
+          HOST_SYS: /hostfs/sys
+          HOST_VAR: /hostfs/var
+          HOST_RUN: /hostfs/run
+          HOST_MOUNT_PREFIX: /hostfs
+        # no hosts because telegraf on metrics.home causes telegraf to go to
+        # loopback/127.0.0.1 inside the container, which is incorrect
+        no_hosts: true
+      register: telegraf_command_result
+
+    - name: generate systemd service
+      shell:
+        cmd: >-
+          podman generate systemd --name telegraf >
+          /etc/systemd/system/container-telegraf.service
+        creates: /etc/systemd/system/container-telegraf.service
+      when: telegraf_command_result.changed
+
+    - name: stop telegraf so systemd can take over
+      containers.podman.podman_container:
+        name: telegraf
+        state: stopped
+      when: telegraf_command_result.changed
+
+  when:
+    - not telegraf_service.stat.exists
+
+- name: start systemd container-telegraf service
+  service:
+    name: container-telegraf
+    state: restarted
+    enabled: true
+    daemon-reload: true

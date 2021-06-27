@@ -1,0 +1,4 @@
+---
+- name: install influx-related components
+  include_tasks: "{{ item }}.yml"
+  loop: "{{ influx_components }}"

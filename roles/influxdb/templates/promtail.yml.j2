@@ -1,0 +1,24 @@
+# jinja2: lstrip_blocks: "False", trim_blocks: "True"
+# ft: jinja-yaml
+---
+positions:
+  filename: /etc/promtail/positions.yml
+
+clients:
+  - url: https://loki.home/loki/api/v1/push
+    tls_config:
+      insecure_skip_verify: true
+
+scrape_configs:
+{% for config in promtail_static_config %}
+  - job_name: "{{ config['name'] }}"
+    static_configs:
+{% for log_item in config['logs'] %}
+      - targets:
+          - localhost
+        labels:
+          job: "{{ log_item['job_name'] }}"
+          __path__: "{{ log_item['log_path'] }}"
+          host: "{{ ansible_hostname }}"
+{% endfor %}
+{% endfor %}

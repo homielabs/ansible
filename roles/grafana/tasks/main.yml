@@ -7,6 +7,11 @@
     name: grafana
     state: present
 
+- name: configure grafana
+  template:
+    src: grafana.ini
+    dest: /etc/grafana/grafana.ini
+
 - name: enable and run grafana service
   service:
     name: grafana-server

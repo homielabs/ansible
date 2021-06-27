@@ -1,0 +1,5 @@
+---
+influx_components:
+  - telegraf
+  - promtail
+influxdb_urls: []
