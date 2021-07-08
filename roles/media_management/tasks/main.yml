@@ -1,0 +1,14 @@
+---
+# these are for sonarr, lidarr, radarr
+- name: include management tools
+  include_tasks: "{{ item }}.yml"
+  loop:
+    - sonarr
+    - radarr
+
+# containers to obtain content - torrent/usenet
+- name: include downloaders
+  include_tasks: "{{ item }}.yml"
+  loop:
+    - torrent
+    - jackett

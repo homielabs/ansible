@@ -1,0 +1,23 @@
+---
+- name: install openvpn
+  package:
+    name: openvpn
+    state: present
+
+- name: write config
+  copy:
+    src: pia.ovpn
+    dest: /etc/openvpn/pia.conf
+
+- name: write user/pass
+  copy:
+    content: |-
+      {{ vpn_user }}
+      {{ vpn_pass }}
+    dest: /etc/openvpn/up.txt
+    mode: 0600
+
+- name: start vpn
+  systemd:
+    name: openvpn@pia
+    state: started

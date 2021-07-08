@@ -1,0 +1,76 @@
+---
+- name: pull sonarr container image
+  containers.podman.podman_image:
+    name: "{{ sonarr_container }}"
+    state: present
+
+- name: ensure sonarr data directory exists
+  file:
+    path: /data/sonarr/
+    state: directory
+    mode: 0755
+
+- name: check to see if systemd service file exists already
+  stat:
+    path: /etc/systemd/system/container-sonarr.service
+  register: sonarr_service
+
+# localhost only so the reverse proxy can handle TLS termination for us
+- name: start sonarr
+  containers.podman.podman_container:
+    name: sonarr
+    image: "{{ sonarr_container }}"
+    state: present
+    # network: slirp4netns
+    publish:
+      - 127.0.0.1:8989:8989
+    volume:
+      # sonarr config
+      - /data/sonarr/:/config/:Z
+      # let it read the whole data dir for atomic move
+      - /data/:/data/:Z
+      # custom certs
+      - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates:ro
+    env:
+      PUID: 0
+      PGID: 0
+      TZ: America/Los_Angeles
+  register: sonarr_command_result
+  when: not sonarr_service.stat.exists
+
+- name: generate systemd service
+  shell:
+    cmd: >-
+      podman generate systemd --name sonarr >
+      /etc/systemd/system/container-sonarr.service
+    creates: /etc/systemd/system/container-sonarr.service
+  when:
+    - not sonarr_service.stat.exists
+    - sonarr_command_result.changed
+
+- name: stop sonarr so systemd can take over
+  containers.podman.podman_container:
+    name: sonarr
+    image: "{{ sonarr_container }}"
+    state: stopped
+  when:
+    - not sonarr_service.stat.exists
+    - sonarr_command_result.changed
+
+- name: start systemd container-sonarr service
+  service:
+    name: container-sonarr
+    state: started
+    enabled: true
+    daemon-reload: true
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        service: sonarr
+        caddyfile_block: |-
+          sonarr.{{ domain }} {
+            reverse_proxy /* localhost:8989
+          }

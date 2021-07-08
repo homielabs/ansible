@@ -1,0 +1,74 @@
+---
+- name: pull radarr container image
+  containers.podman.podman_image:
+    name: "{{ radarr_container }}"
+    state: present
+
+- name: ensure radarr data directory exists
+  file:
+    path: /data/radarr/
+    state: directory
+    mode: 0755
+
+- name: check to see if systemd service file exists already
+  stat:
+    path: /etc/systemd/system/container-radarr.service
+  register: radarr_service
+
+# localhost only so the reverse proxy can handle TLS termination for us
+- name: start radarr
+  containers.podman.podman_container:
+    name: radarr
+    image: "{{ radarr_container }}"
+    state: present
+    # network: slirp4netns
+    publish:
+      - 127.0.0.1:7878:7878
+    volume:
+      # radarr config
+      - /data/radarr/:/config/:Z
+      # let it read the whole data dir for atomic move
+      - /data/:/data/:Z
+    env:
+      PUID: 0
+      PGID: 0
+      TZ: America/Los_Angeles
+  register: radarr_command_result
+  when: not radarr_service.stat.exists
+
+- name: generate systemd service
+  shell:
+    cmd: >-
+      podman generate systemd --name radarr >
+      /etc/systemd/system/container-radarr.service
+    creates: /etc/systemd/system/container-radarr.service
+  when:
+    - not radarr_service.stat.exists
+    - radarr_command_result.changed
+
+- name: stop radarr so systemd can take over
+  containers.podman.podman_container:
+    name: radarr
+    image: "{{ radarr_container }}"
+    state: stopped
+  when:
+    - not radarr_service.stat.exists
+    - radarr_command_result.changed
+
+- name: start systemd container-radarr service
+  service:
+    name: container-radarr
+    state: started
+    enabled: true
+    daemon-reload: true
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        service: radarr
+        caddyfile_block: |-
+          radarr.{{ domain }} {
+            reverse_proxy /* localhost:7878
+          }

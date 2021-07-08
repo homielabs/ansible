@@ -1,0 +1,4 @@
+---
+sonarr_container: linuxserver/sonarr
+jackett_container: linuxserver/jackett
+radarr_container: linuxserver/radarr

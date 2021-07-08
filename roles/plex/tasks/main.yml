@@ -36,9 +36,15 @@
           PUID: 0
           PGID: 0
           VERSION: latest
-        publish:
-          - "32400:32400"
-        network: "{{ 'slirp4netns' if slirp4netns else omit }}"
+          TZ: "America/Los_Angeles"
+          ADVERTISE_IP: "http://192.168.1.125:32400"
+        # if no slirp4netns, use host networking
+        # this is important because plex will ask for the ip addr inside the
+        # container, and if it receives 10.88.0.x, it will report that to
+        # plex.tv, and then mobile devices will break
+        network: "{{ slirp4netns | ternary('slirp4netns', 'host') }}"
+        # publish 32400 if using slirp4netns
+        publish: "{{ slirp4netns | ternary(['32400:32400'], omit) }}"
       register: plex_no_transcode_result
       when: not plex_nvidia_transcode
 
