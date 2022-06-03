@@ -6,6 +6,10 @@
     group: root
     mode: 0755
     state: directory
+- name: "install unzip"
+  package:
+    name: "unzip"
+    state: "present"
 - name: pull latest site
   unarchive:
     src: https://nightly.link/guppy0130/website/workflows/main/main/_site.zip

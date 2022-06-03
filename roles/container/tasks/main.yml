@@ -15,6 +15,11 @@
     - container_package == 'docker'
     - lookup('env', 'container') != 'docker'
 
+- name: "stat /etc/containers/containers.conf"
+  stat:
+    path: "/etc/containers/containers.conf"
+  register: "containers_conf"
+
 # https://www.notion.so/yanghome/Home-Proxmox-a2bddaee846d4d75b146d43447202abe#ebc9398b4521421f94d6dbc73b8396c6
 - name: fix kubic install
   block:
@@ -30,6 +35,7 @@
   when:
     - fixup_kubic_config is defined
     - fixup_kubic_config
+    - containers_conf.stat.exists
 
 - name: enable/start docker service
   service:

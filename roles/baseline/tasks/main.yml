@@ -25,7 +25,7 @@
     state: present
 
 - name: updates
-  include: update_unix.yml
+  include_tasks: update_unix.yml
 
 # Keys/certs
 

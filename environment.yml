@@ -1,12 +1,12 @@
 ---
-name: ansible-2.10
+name: ansible-2.12
 dependencies:
   - python=3.9
   - pip
   - pip:
-      - ansible==3.0.0
-      - ansible-lint==5.0.2
-      - pre-commit==2.10.1
+      - ansible==5.8.0
+      - ansible-lint==6.2.2
+      - pre-commit==2.19.0
       - pipdeptree==2.0.0
-      - detect-secrets==1.1.0
+      - detect-secrets==1.2.0
       - netaddr==0.8.0
