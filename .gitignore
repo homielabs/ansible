@@ -6,3 +6,4 @@ hosts
 .vscode/
 roles/skeleton
 inventory/
+.DS_Store
