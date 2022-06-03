@@ -46,3 +46,12 @@
   when:
     - container_package == 'docker'
     - lookup('env', 'container') != 'docker'
+
+- name: "unbreak dbus.socket for podman"
+  ansible.builtin.service:
+    name: "dbus.socket"
+    state: "started"
+    enabled: "true"
+  when:
+    - container_package == 'podman'
+    - lookup('env', 'container') != 'podman'
