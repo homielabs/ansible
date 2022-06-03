@@ -5,22 +5,22 @@
     state: present
 
 - name: ensure folder exists for credentials
-  file:
+  ansible.builtin.file:
     path: /data/certbot/
     state: directory
     mode: 0700
 
 - name: copy DO credentials
-  template:
+  ansible.builtin.template:
     src: .env.j2
     dest: /data/certbot/.env
-    mode: 0700
+    mode: "0700"
 
 - name: ensure folder exists for certs
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    mode: 0750
+    mode: "0750"
   loop:
     - /etc/letsencrypt
     - /var/lib/letsencrypt
@@ -28,7 +28,7 @@
 
 # theoretically correct but can't get it to work
 - name: run certbot/dns-digitalocean image
-  command: >-
+  ansible.builtin.command: >-
     podman run -it --rm --name certbot
     -v /etc/letsencrypt:/etc/letsencrypt:z
     -v /var/lib/letsencrypt:/var/lib/letsencrypt:z

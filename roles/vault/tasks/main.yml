@@ -3,17 +3,18 @@
   include_tasks: "{{ ansible_distribution | lower }}.yml"
 
 - name: install vault
-  package:
+  ansible.builtin.package:
     name: vault
     state: present
 
 - name: configure vault
-  template:
+  ansible.builtin.template:
     src: vault.hcl.j2
     dest: "{{ vault_config_location }}"
+    mode: "0644"
 
 - name: make folders for vault data
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     mode: 0700
@@ -24,12 +25,13 @@
     - "{{ vault_unseal_keys_location }}"
 
 - name: add systemd unit
-  template:
+  ansible.builtin.template:
     src: vault.service.j2
     dest: /etc/systemd/system/vault.service
+    mode: "0644"
 
 - name: start vault with systemd
-  systemd:
+  ansible.builtin.systemd:
     daemon_reload: true
     enabled: true
     state: started
@@ -47,7 +49,7 @@
           }
 
 - name: get vault initialization status
-  command: vault operator init -status
+  ansible.builtin.command: vault operator init -status
   register: vault_operator_init_status
   failed_when: vault_operator_init_status.rc == 1
   changed_when: false # this operation never modifies vault
@@ -64,7 +66,7 @@
 
 # otherwise, you won't have LE certs at the right time
 - name: flush handlers to enable vault.* before vault-ssh-helper
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers
 
 - name: include vault-ssh-helper
   include_tasks:

@@ -1,6 +1,6 @@
 ---
 - name: install fail2ban and sendmail
-  package:
+  ansible.builtin.package:
     name:
       - fail2ban
       - sendmail
@@ -8,26 +8,26 @@
     state: present
 
 - name: get IP of controller
-  uri:
+  ansible.builtin.uri:
     url: http://ifconfig.me/ip
     return_content: true
   register: ip_response
   connection: local
   delegate_to: localhost
-  become: false  # do not attempt to become, because maybe passwords
+  become: false # do not attempt to become, because maybe passwords
 
 - name: copy fail2ban config
-  template:
+  ansible.builtin.template:
     src: fail2ban.jail.local.j2
     dest: /etc/fail2ban/jail.local
     mode: 0644
 
 - name: hostname fixup FQDN for sendmail
-  hostname:
+  ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
 
 - name: start/enable fail2ban/sendmail
-  systemd:
+  ansible.builtin.systemd:
     name: "{{ item }}"
     state: restarted
     enabled: true

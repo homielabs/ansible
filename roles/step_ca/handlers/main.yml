@@ -1,6 +1,6 @@
 ---
 - name: new cert
-  command:
+  ansible.builtin.command:
     cmd: "some acme request?"
     creates: "file"
   listen: "new cert"

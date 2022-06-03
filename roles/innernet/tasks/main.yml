@@ -1,11 +1,11 @@
 ---
 - name: "install wireguard"
-  package:
+  ansible.builtin.package:
     name: "wireguard"
     state: "present"
 
 - name: "install innernet"
-  apt:
+  ansible.builtin.apt:
     deb: "https://github.com/tonarino/innernet/releases/download/v{{ innernet_version }}/innernet_{{ innernet_version }}_amd64.deb"
 
 - name: "add server tasks if required"

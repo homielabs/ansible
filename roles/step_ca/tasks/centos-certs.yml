@@ -1,17 +1,17 @@
 ---
 - name: nuke existing root cert
-  file:
+  ansible.builtin.file:
     path: /etc/pki/ca-trust/source/anchors/step-ca.root.pem
     state: absent
 
 - name: reset ca-bundle
-  command: "update-ca-trust extract"
+  ansible.builtin.command: "update-ca-trust extract"
 
 - name: add the root to host trust
-  file:
+  ansible.builtin.file:
     src: /data/step-ca/certs/root_ca.crt
     dest: /etc/pki/ca-trust/source/anchors/step-ca.root.pem
     state: link
 
 - name: update ca-bundle
-  command: "update-ca-trust extract"
+  ansible.builtin.command: "update-ca-trust extract"

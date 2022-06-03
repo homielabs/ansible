@@ -1,38 +1,40 @@
 ---
 - name: add gpg key for repo
-  apt_key:
+  ansible.builtin.apt_key:
     url: https://nvidia.github.io/nvidia-docker/gpgkey
 
 - name: add repo
-  get_url:
+  ansible.builtin.get_url:
     url: "https://nvidia.github.io/nvidia-docker/ubuntu20.04/nvidia-docker.list"
     dest: /etc/apt/sources.list.d/nvidia-docker.list
+    mode: "0644"
 
 - name: install nvidia-container-toolkit (podman)
-  apt:
+  ansible.builtin.apt:
     name: nvidia-container-toolkit
     state: latest
     update_cache: true # noqa: package-latest
 
 - name: make hook directory if required
-  file:
+  ansible.builtin.file:
     path: /usr/share/containers/oci/hooks.d
     state: directory
+    mode: "0755"
 
 - name: copy hook
-  copy:
+  ansible.builtin.copy:
     src: oci-nvidia-hook.json
     dest: /usr/share/containers/oci/hooks.d/oci-nvidia-hook.json
     mode: 0644
 
 - name: uncomment no-cgroups in nvidia-container-runtime config
-  replace:
+  ansible.builtin.replace:
     path: /etc/nvidia-container-runtime/config.toml
     regexp: "^#?no-cgroups = false"
     replace: "no-cgroups = true"
 
 - name: test gpu passthrough works
-  command: >-
+  ansible.builtin.command: >-
     podman run --rm --security-opt=label=disable
       --hooks-dir=/usr/share/containers/oci/hooks.d/
       nvidia/cuda:11.0-base nvidia-smi
@@ -40,5 +42,5 @@
   changed_when: false
 
 - name: assert previous command has content
-  assert:
+  ansible.builtin.assert:
     that: "'Driver Version' in nvidia_smi_output.stdout"

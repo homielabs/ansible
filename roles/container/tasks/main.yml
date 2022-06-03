@@ -3,12 +3,12 @@
   include_tasks: "{{ ansible_distribution }}.yml"
 
 - name: install docker/podman
-  package:
+  ansible.builtin.package:
     name: "{{ container_package }}"
     state: latest # noqa package-latest
 
 - name: install Docker SDK for Python
-  pip:
+  ansible.builtin.pip:
     name: docker
     state: latest # noqa package-latest
   when:
@@ -16,7 +16,7 @@
     - lookup('env', 'container') != 'docker'
 
 - name: "stat /etc/containers/containers.conf"
-  stat:
+  ansible.builtin.stat:
     path: "/etc/containers/containers.conf"
   register: "containers_conf"
 
@@ -24,21 +24,22 @@
 - name: fix kubic install
   block:
     - name: "fixup mount_program in storage.conf"
-      replace:
+      ansible.builtin.replace:
         path: "/etc/containers/storage.conf"
         regexp: "^#(.*mount_program = .*)"
         replace: '\1'
     - name: "fixup containers.conf"
-      copy:
+      ansible.builtin.copy:
         src: "containers.conf"
         dest: "/etc/containers/containers.conf"
+        mode: "0644"
   when:
     - fixup_kubic_config is defined
     - fixup_kubic_config
     - containers_conf.stat.exists
 
 - name: enable/start docker service
-  service:
+  ansible.builtin.service:
     name: docker
     state: started
     enabled: true

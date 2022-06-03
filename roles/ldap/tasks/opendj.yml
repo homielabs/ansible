@@ -31,6 +31,6 @@
 # opendj inside the container. just wait a little bit and eventually this file
 # should show up, I guess...?
 - name: wait for opendj to activate
-  wait_for:
+  ansible.builtin.wait_for:
     delay: 5
     path: /data/opendj/logs/server.pid

@@ -1,13 +1,13 @@
 ---
 - name: restart nginx
-  service:
+  ansible.builtin.service:
     name: nginx
     state: restarted
     enabled: true
   listen: "restart reverse proxy"
 
 - name: setup nginx config
-  template:
+  ansible.builtin.template:
     src: "{{ service }}.nginx.j2"
     dest: /etc/nginx/sites-available/{{ service }}.j2
     mode: 0644
@@ -16,7 +16,7 @@
     - enable reverse proxy
 
 - name: enable nginx config
-  file:
+  ansible.builtin.file:
     src: /etc/nginx/sites-available/{{ service }}.j2
     dest: /etc/nginx/sites-enabled/{{ service }}.j2
     state: link
@@ -25,7 +25,7 @@
     - restart reverse proxy
 
 - name: disable nginx config
-  file:
+  ansible.builtin.file:
     src: /etc/nginx/sites-available/{{ service }}.j2
     dest: /etc/nginx/sites-enabled/{{ service }}.j2
     state: absent

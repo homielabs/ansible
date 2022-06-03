@@ -1,41 +1,42 @@
 ---
 - name: "download installer"
-  get_url:
+  ansible.builtin.get_url:
     url: "https://install.pi-hole.net"
     dest: "/tmp/pihole-install.sh"
     mode: "0755"
 
 - name: "do some networking math"
-  set_fact:
+  ansible.builtin.set_fact:
     net_mask: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}"
 
 - name: "make parents for pihole config"
-  file:
+  ansible.builtin.file:
     path: "/etc/pihole"
     state: "directory"
     recurse: true
 
 - name: "setup configuration for unattended install"
-  template:
+  ansible.builtin.template:
     src: "setupVars.conf"
     dest: "/etc/pihole/setupVars.conf"
+    mode: "0644"
 
 - name: "install pihole"
-  command: "/tmp/pihole-install.sh --unattended"
+  ansible.builtin.command: "/tmp/pihole-install.sh --unattended"
 
 - name: "ensure pip exists"
-  apt:
+  ansible.builtin.apt:
     name: python3-pip
     update_cache: true
     state: present
 
 - name: "install pexpect to remove password"
-  pip:
+  ansible.builtin.pip:
     name: pexpect
     state: present
 
 - name: "remove password"
-  expect:
+  ansible.builtin.expect:
     command: "pihole -a -p"
     responses:
       "Enter.*": ""

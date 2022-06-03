@@ -1,6 +1,6 @@
 ---
 - name: add duo repo
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: duosecurity
     description: Duo Security Repository
     enabled: true
@@ -10,20 +10,20 @@
   when: (ansible_distribution == 'CentOS') and (lookup('env', 'container') != 'docker')
 
 - name: install duo
-  package:
+  ansible.builtin.package:
     name: duo_unix
     state: latest # noqa package-latest usually stable
   when: (lookup('env', 'container') != 'docker')
 
 - name: add duo configuration
-  template:
+  ansible.builtin.template:
     src: pam_duo.conf
     dest: /etc/duo/pam_duo.conf
     mode: 0644
   when: (lookup('env', 'container') != 'docker')
 
 - name: configure pam.d
-  copy:
+  ansible.builtin.copy:
     src: sshd
     dest: /etc/pam.d/sshd
     become: true
@@ -31,10 +31,10 @@
   when: (lookup('env', 'container') != 'docker')
 
 - name: restart sshd
-  service:
+  ansible.builtin.service:
     name: sshd
     state: restarted
 
 - name: alert user
-  debug:
+  ansible.builtin.debug:
     msg: "You need to configure /etc/ssh/sshd_config now!"

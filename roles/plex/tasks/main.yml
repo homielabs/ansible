@@ -5,7 +5,7 @@
     state: present
 
 - name: ensure plex data directory and children exists
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     mode: 0777 # everyone should be able to add content
@@ -17,7 +17,7 @@
     - /data/plex/tv/
 
 - name: check to see if systemd service file exists already
-  stat:
+  ansible.builtin.stat:
     path: /etc/systemd/system/container-plex.service
   register: plex_service
 
@@ -43,7 +43,7 @@
       when: not plex_nvidia_transcode
 
     - name: start plex (hw transcode)
-      command: >-
+      ansible.builtin.command: >-
         podman run -d
           --name plex
           -v /data/plex/config:/config:Z
@@ -64,12 +64,12 @@
     # since the second register will always overwrite the first if they had the
     # same variable name
     - name: fixup var names
-      set_fact:
+      ansible.builtin.set_fact:
         plex_command_result: "{{ (plex_transcode_result.changed) |
           ternary(plex_transcode_result, plex_no_transcode_result) }}"
 
     - name: generate systemd service
-      shell:
+      ansible.builtin.shell:
         cmd: >-
           podman generate systemd --name plex >
           /etc/systemd/system/container-plex.service
@@ -77,12 +77,12 @@
       when: plex_command_result.changed
 
     - name: stop plex so systemd can take over
-      command: podman container stop plex
+      ansible.builtin.command: podman container stop plex
       when: plex_command_result.changed
   when: not plex_service.stat.exists
 
 - name: start systemd container-plex service
-  service:
+  ansible.builtin.service:
     name: container-plex
     state: started
     enabled: true

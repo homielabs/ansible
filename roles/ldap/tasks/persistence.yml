@@ -3,7 +3,7 @@
 # configurator to break. maybe you should also update the config.json on disk?
 # {'LockIndex': 0, 'Key': 'gluu/config/ldap_init_host', 'Flags': 0, 'Value': None, 'CreateIndex': 66, 'ModifyIndex': 201}
 - name: write a key that configurator will miss (ldap_init_host)
-  command:
+  ansible.builtin.command:
     cmd: >-
       podman exec
         -e CONSUL_HTTP_ADDR=consul:8500

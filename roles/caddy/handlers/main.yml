@@ -1,6 +1,6 @@
 ---
 - name: restart caddy
-  service:
+  ansible.builtin.service:
     name: caddy
     state: restarted
     enabled: true

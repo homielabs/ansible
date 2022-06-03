@@ -1,6 +1,6 @@
 ---
 - name: add telegraf yum repo
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: influxdb
     description: InfluxDB Repository - RHEL $releasever
     baseurl: https://repos.influxdata.com/rhel/$releasever/$basearch/stable
@@ -9,18 +9,18 @@
   when: (ansible_distribution == 'CentOS') and (lookup('env', 'container') != 'docker')
 
 - name: install telegraf
-  package:
+  ansible.builtin.package:
     name: telegraf
     state: present
 
 - name: copy telegraf config
-  template:
+  ansible.builtin.template:
     src: telegraf.conf.j2
     dest: /etc/telegraf/telegraf.conf
     mode: 0644
 
 - name: start/enable telegraf service
-  systemd:
+  ansible.builtin.systemd:
     name: telegraf
     state: restarted
     enabled: true

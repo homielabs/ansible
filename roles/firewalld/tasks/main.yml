@@ -1,20 +1,20 @@
 ---
 - name: install firewalld
-  package:
+  ansible.builtin.package:
     name: firewalld
     state: present
 
 - name: start firewalld
-  service:
+  ansible.builtin.service:
     name: firewalld
     state: started
     enabled: true
 
 - name: get services
-  service_facts:
+  ansible.builtin.service_facts:
 
 - name: disable ufw if exists
-  service:
+  ansible.builtin.service:
     name: ufw
     state: stopped
     enabled: false

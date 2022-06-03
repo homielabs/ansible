@@ -1,12 +1,12 @@
 ---
 - name: import distro variables
-  include_vars: "{{ ansible_distribution | lower }}.yml"
+  ansible.builtin.include_vars: "{{ ansible_distribution | lower }}.yml"
 
 - name: include distro-specific pre-tasks (updating pkg cache)
   include_tasks: "{{ ansible_distribution | lower }}.yml"
 
 - name: install baseline packages
-  package:
+  ansible.builtin.package:
     name:
       - vim
       - openssh-server
@@ -20,7 +20,7 @@
     state: present
 
 - name: distro specific packages
-  package:
+  ansible.builtin.package:
     name: "{{ packages }}"
     state: present
 
@@ -45,14 +45,14 @@
     state: present
 
 - name: set locale
-  command: localectl set-locale LANG=en_US.utf8
+  ansible.builtin.command: localectl set-locale LANG=en_US.utf8
 
 - name: set timezone
   community.general.timezone:
     name: America/Los_Angeles
 
 - name: deploy dotfiles
-  git:
+  ansible.builtin.git:
     repo: https://github.com/guppy0130/dotfiles.git
     dest: "~/dotfiles"
     version: master
@@ -60,7 +60,7 @@
 # Services
 
 - name: copy chronyd config for containerized systemd
-  copy:
+  ansible.builtin.copy:
     src: "chronyd"
     dest: "/etc/sysconfig/chronyd"
     mode: 0644
@@ -90,7 +90,7 @@
 # setup /data dir
 
 - name: setup /data dir
-  file:
+  ansible.builtin.file:
     path: /data
     owner: root
     group: root

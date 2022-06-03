@@ -3,12 +3,12 @@
   include_tasks: "{{ ansible_distribution | lower }}.yml"
 
 - name: install caddy
-  package:
+  ansible.builtin.package:
     name: caddy
     state: present
 
 - name: determine if Caddyfile is ansible-managed
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: "{{ caddy_config_location }}"
     regexp: "ANSIBLE MANAGED"
     state: absent
@@ -19,13 +19,13 @@
 # this has the nasty side effect of removing everything, including things
 # under block control
 - name: remove default config
-  file:
+  ansible.builtin.file:
     path: "{{ caddy_config_location }}"
     state: absent
   when: not caddyfile_ansible_managed.found
 
 - name: setup caddy config
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: "{{ caddy_config_location }}"
     marker: "# {mark} ANSIBLE MANAGED config"
     block: |
@@ -52,7 +52,7 @@
   when: deploy_example_service
 
 - name: figure out if firewalld exists
-  command:
+  ansible.builtin.command:
     cmd: command -v firewalld
   register: firewalld_exists
   changed_when: false
@@ -67,7 +67,7 @@
   when: firewalld_exists.rc == 0
 
 - name: enable caddy service
-  service:
+  ansible.builtin.service:
     name: caddy
     state: started
     enabled: true

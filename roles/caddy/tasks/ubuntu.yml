@@ -1,10 +1,10 @@
 ---
 - name: add caddy key
-  apt_key:
+  ansible.builtin.apt_key:
     url: https://dl.cloudsmith.io/public/caddy/stable/cfg/gpg/gpg.155B6D79CA56EA34.key
 
 - name: add caddy repository
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: "{{ item }}"
     state: present
     update_cache: true

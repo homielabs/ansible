@@ -1,29 +1,30 @@
 ---
 - name: install unzip
-  package:
+  ansible.builtin.package:
     name: unzip
     state: present
 
 - name: download vault-ssh-helper
-  unarchive:
+  ansible.builtin.unarchive:
     src: https://releases.hashicorp.com/vault-ssh-helper/0.2.1/vault-ssh-helper_{{ vault_ssh_helper_version }}_linux_amd64.zip
     dest: /usr/local/bin/
     remote_src: true
 
 - name: make vault-ssh-helper config directory
-  file:
+  ansible.builtin.file:
     path: "{{ vault_ssh_helper_config_location | dirname }}"
     state: directory
     mode: g=-rwx,o=-rwx # only the root user may read/enum folder
 
 - name: configure vault-ssh-helper
-  template:
+  ansible.builtin.template:
     src: vault-ssh-helper.hcl.j2
     dest: "{{ vault_ssh_helper_config_location }}"
     validate: vault-ssh-helper -verify-only -config %s
+    mode: "0644"
 
 - name: add vault-ssh-helper to sshd
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/pam.d/sshd
     insertafter: "@include common-auth"
     block: |
@@ -31,14 +32,14 @@
       auth optional pam_unix.so not_set_pass use_first_pass nodelay
 
 - name: comment out common-auth stanza
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/pam.d/sshd
     regexp: "^(#)?@include common-auth"
     line: "#@include common-auth"
     state: present
 
 - name: configure sshd config
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
     regexp: "^(#)?{{ item.regexp }}"
     line: "{{ item.regexp }} {{ item.value }}"

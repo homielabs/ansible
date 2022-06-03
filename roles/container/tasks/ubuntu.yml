@@ -1,14 +1,14 @@
 ---
 - name: add kubic key
-  apt_key:
+  ansible.builtin.apt_key:
     url: https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_{{ ansible_distribution_version }}/Release.key
 
 - name: add kubic repository
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_{{ ansible_distribution_version }} /
     state: present
     update_cache: true
 
 - name: set reminder to fixup config
-  set_fact:
+  ansible.builtin.set_fact:
     fixup_kubic_config: true

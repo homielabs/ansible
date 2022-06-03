@@ -3,12 +3,12 @@
   include_tasks: "{{ ansible_distribution }}.yml"
 
 - name: install grafana
-  package:
+  ansible.builtin.package:
     name: grafana
     state: present
 
 - name: enable and run grafana service
-  service:
+  ansible.builtin.service:
     name: grafana-server
     state: started
     enabled: true

@@ -3,7 +3,7 @@
 # item consists of keys primary (what you'd like to enable) and fallback (what
 # you have to enable when systemd does dumb things)
 - name: figure out if {{ item.primary }} is a symlink
-  stat:
+  ansible.builtin.stat:
     path: "/etc/systemd/system/{{ item.primary }}.service"
   register: service_file
 
@@ -11,11 +11,11 @@
 # otherwise, attempt to enable {{ item.secondary }}
 # dummy systemd things
 - name: figure out if its {{ item.primary }} or {{ item.fallback }}
-  set_fact:
+  ansible.builtin.set_fact:
     service_name: "{{ (service_file.stat.islnk is defined and not service_file.stat.islnk) | ternary(item.primary, item.fallback) }}"
 
 - name: enable {{ service_name }} on boot
-  service:
+  ansible.builtin.service:
     name: "{{ service_name }}"
     state: started
     enabled: true

@@ -1,6 +1,6 @@
 ---
 - name: remove login nag
-  replace:
+  ansible.builtin.replace:
     path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
     regexp: ".data.status.* !== 'active'"
     replace: " || false"
@@ -8,19 +8,19 @@
 
 # don't bother restarting if nothing changed.
 - name: restart pveproxy
-  service:
+  ansible.builtin.service:
     name: pveproxy
     state: restarted
   when: login_nav_removed.changed
 
 - name: remove enterprise upstream
-  file:
+  ansible.builtin.file:
     path: /etc/apt/sources.list.d/pve-enterprise.list
     state: absent
 
 # ansible distribution release is buster, etc.
 - name: add pve-no-subscription
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/apt/sources.list.d/pve-no-subscription.list
     line: deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription
     state: present
@@ -28,19 +28,20 @@
     mode: 0755
 
 - name: pull turnkey updates # noqa no-changed-when
-  command: pveam update
+  ansible.builtin.command: pveam update
 
 # unset the NO_ATA_1X flag for externally-connected hard drives
 # this is because the kernel is lying to us for some reason :<
 - name: add disable_uas.conf to modprobes
-  copy:
+  ansible.builtin.copy:
     src: disable_uas.conf
     dest: /etc/modprobe.d/disable_uas.conf
+    mode: "0644"
   register: copy_disable_uas
 
 # only rebuild initramfs when we actually make the previous change
 # it's pretty important, so we don't want to touch it too often.
 - name: rebuild initramfs so modprobe changes are activated
-  command: update-initramfs -k all -u
+  ansible.builtin.command: update-initramfs -k all -u
   changed_when: true
   when: copy_disable_uas.changed

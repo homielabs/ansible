@@ -1,6 +1,6 @@
 ---
 - name: enable podman_remote service
-  service:
+  ansible.builtin.service:
     name: podman.socket
     enabled: true
     state: started

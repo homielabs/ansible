@@ -1,4 +1,4 @@
 ---
 - name: update apt
-  apt:
+  ansible.builtin.apt:
     update_cache: true

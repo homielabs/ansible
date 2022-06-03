@@ -1,8 +1,9 @@
 ---
 - name: copy vault gluu policy
-  copy:
+  ansible.builtin.copy:
     src: vault_gluu_policy.hcl
     dest: /data/vault/vault_gluu_policy.hcl
+    mode: "0644"
 
 - name: setup vault
   containers.podman.podman_container:
@@ -42,13 +43,13 @@
   register: vault_container
 
 - name: wait on vault to be ready
-  wait_for:
+  ansible.builtin.wait_for:
     host: "{{ vault_container.container.NetworkSettings.Networks.gluu.IPAddress }}"
     port: 8200
 
 # generate an app role + secret for containers
 - name: initialize vault
-  command:
+  ansible.builtin.command:
     cmd: >-
       podman exec -it vault
         vault operator init
@@ -60,16 +61,17 @@
   register: vault_keys
 
 - name: parse vault_keys.stdout as json
-  set_fact:
+  ansible.builtin.set_fact:
     vault_keys: "{{ vault_keys.stdout | from_json }}"
 
 # note the on purpose posix newline
 # also, the renamed loop_var is because this tasks file may be run in the
 # context of the include loop in main.yml
 - name: write vault key and token to disk
-  copy:
+  ansible.builtin.copy:
     content: "{{ my_item.key }}\n"
     dest: "{{ my_item.path }}"
+    mode: "0400"
   loop_control:
     loop_var: my_item
   loop:
@@ -80,14 +82,14 @@
 
 # unlock vault
 - name: unlock vault
-  command:
+  ansible.builtin.command:
     cmd: >-
       podman exec -it vault
         vault operator unseal
           {{ vault_keys.unseal_keys_b64[0] }}
 
 - name: setup kv secrets engine at secret/
-  command:
+  ansible.builtin.command:
     cmd: >-
       podman exec -it
         -e VAULT_TOKEN="{{ vault_keys.root_token }}"
@@ -98,7 +100,7 @@
 - name: gluu policy setup in vault
   block:
     - name: check to see if vault already has the gluu policy
-      command:
+      ansible.builtin.command:
         cmd: >-
           podman exec -it
             -e VAULT_TOKEN="{{ vault_keys.root_token }}"
@@ -109,7 +111,7 @@
       changed_when: false # read only op
 
     - name: add the gluu policy to vault
-      command:
+      ansible.builtin.command:
         cmd: >-
           podman exec -it
             -e VAULT_TOKEN="{{ vault_keys.root_token }}"
@@ -121,7 +123,7 @@
 - name: approle auth with vault
   block:
     - name: check to see if vault already has approle
-      command:
+      ansible.builtin.command:
         cmd: >-
           podman exec -it
             -e VAULT_TOKEN="{{ vault_keys.root_token }}"
@@ -131,11 +133,11 @@
       register: vault_auth_list
 
     - name: parse vault_auth_list as json
-      set_fact:
+      ansible.builtin.set_fact:
         vault_auth_list: "{{ vault_auth_list.stdout | from_json }}"
 
     - name: add approle to vault
-      command:
+      ansible.builtin.command:
         cmd: >-
           podman exec -it
             -e VAULT_TOKEN="{{ vault_keys.root_token }}"
@@ -144,7 +146,7 @@
             vault auth enable approle
 
     - name: vault write auth/approle/role/gluu policies=gluu
-      command:
+      ansible.builtin.command:
         cmd: >-
           podman exec -it
             -e VAULT_TOKEN="{{ vault_keys.root_token }}"
@@ -153,7 +155,7 @@
             vault write auth/approle/role/gluu policies=gluu
 
     - name: generate the approle token
-      command:
+      ansible.builtin.command:
         cmd: >-
           podman exec -it
             -e VAULT_TOKEN="{{ vault_keys.root_token }}"
@@ -171,7 +173,7 @@
     # by presenting as without a TTY, no colors/escape chars are required, so
     # none will be output; the result is that stdout that comes out is pure text
     - name: read back role-id from approle
-      command:
+      ansible.builtin.command:
         cmd: >-
           podman exec
             -e VAULT_TOKEN="{{ vault_keys.root_token }}"
@@ -181,15 +183,16 @@
       register: gluu_vault_role_id
 
     - name: write role-id to file
-      copy:
+      ansible.builtin.copy:
         content: "{{ gluu_vault_role_id.stdout }}\n"
         dest: /data/vault/vault_role_id.txt
+        mode: "0600"
 
     # technically, write and get back a value
     # the -f is because we want to get a secretID issued against the approle?
     # https://www.vaultproject.io/docs/auth/approle#:~:text=Get%20a%20SecretID%20issued%20against%20the%20AppRole
     - name: read back secret-id from approle
-      command:
+      ansible.builtin.command:
         cmd: >-
           podman exec
             -e VAULT_TOKEN="{{ vault_keys.root_token }}"
@@ -199,9 +202,10 @@
       register: gluu_vault_secret_id
 
     - name: write secret-id to file
-      copy:
+      ansible.builtin.copy:
         content: "{{ gluu_vault_secret_id.stdout }}\n"
         dest: /data/vault/vault_secret_id.txt
+        mode: "0600"
     # curl --request POST --data-binary "@/etc/certs/curl_example.json" vault:8200/v1/auth/approle/login
     # - name: write test curl data to file
     #   copy:

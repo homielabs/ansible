@@ -1,32 +1,33 @@
 ---
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+  - repo: "https://github.com/pre-commit/pre-commit-hooks"
+    rev: "v4.2.0"
     hooks:
-      - id: check-yaml
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-  - repo: https://github.com/psf/black
-    rev: 21.5b0
+      - id: "check-yaml"
+      - id: "end-of-file-fixer"
+      - id: "trailing-whitespace"
+      - id: "check-merge-conflict"
+  - repo: "https://github.com/psf/black"
+    rev: "22.3.0"
     hooks:
-      - id: black
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.26.1
+      - id: "black"
+  - repo: "https://github.com/adrienverge/yamllint.git"
+    rev: "v1.26.3"
     hooks:
-      - id: yamllint
+      - id: "yamllint"
         args:
-          - -f
-          - parsable
-  - repo: https://github.com/ansible-community/ansible-lint.git
-    rev: v5.0.8
+          - "-f"
+          - "parsable"
+  - repo: "https://github.com/ansible-community/ansible-lint.git"
+    rev: "v6.2.2"
     hooks:
-      - id: ansible-lint
+      - id: "ansible-lint"
         args:
-          - -p
-  - repo: https://github.com/Yelp/detect-secrets.git
-    rev: v1.1.0
+          - "-p"
+  - repo: "https://github.com/Yelp/detect-secrets.git"
+    rev: "v1.2.0"
     hooks:
-      - id: detect-secrets
+      - id: "detect-secrets"
         args:
           - "--baseline"
           - ".secrets.baseline"

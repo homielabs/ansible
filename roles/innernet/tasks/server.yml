@@ -1,6 +1,6 @@
 ---
 - name: "install innernet-server"
-  apt:
+  ansible.builtin.apt:
     deb: "https://github.com/tonarino/innernet/releases/download/v{{ innernet_version }}/innernet-server_{{ innernet_version }}_amd64.deb"
 
 - name: "open ports for innernet"
@@ -14,13 +14,13 @@
     - "{{ innernet_port }}/udp"
 
 - name: "get public ip addr"
-  uri:
+  ansible.builtin.uri:
     url: http://ifconfig.me/ip
     return_content: true
   register: ip_response
 
 - name: "setup new innernet server base"
-  command:
+  ansible.builtin.command:
     cmd: >-
       innernet-server new
         --external-endpoint {{ ip_response.content }}:{{ innernet_port }}
@@ -34,7 +34,7 @@
   loop: "{{ innernet_server_groups }}"
 
 - name: "activate + persist service"
-  service:
+  ansible.builtin.service:
     name: "innernet-server@{{ innernet_server_base }}.service"
     state: started
     enabled: true

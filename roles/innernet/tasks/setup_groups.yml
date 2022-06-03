@@ -6,14 +6,14 @@
   # if this returns anything, you must skip - both (name) or (ip, prefix) must
   # be unique, so any output on matching by name means you can't reuse that
   # name.
-  command: >-
+  ansible.builtin.command: >-
     sqlite3 /var/lib/innernet-server/{{ innernet_server_base }}.db
     "SELECT * FROM cidrs WHERE name == '{{ item.name }}';"
   register: "_innernet_check_output"
   # this is a read-only op and therefore never makes changes
   changed_when: false
 - name: "add innernet group {{ item.name }}"
-  command: >-
+  ansible.builtin.command: >-
     innernet-server add-cidr
       --cidr {{ item.cidr }}
       --name {{ item.name }}

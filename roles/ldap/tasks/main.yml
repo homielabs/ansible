@@ -12,14 +12,15 @@
   loop: "{{ ldap_container_images }}"
 
 - name: nuke data dirs
-  file:
+  ansible.builtin.file:
     path: "/data"
     state: absent
 
 - name: setup volume dirs
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
+    mode: "0755"
   loop:
     - "/data/consul/data"
     - "/data/vault/config"

@@ -1,8 +1,9 @@
 ---
 - name: copy gluu-config.json
-  template:
+  ansible.builtin.template:
     src: gluu-config.json
     dest: /data/gluu-config/generate.json
+    mode: "0644"
 
 - name: setup gluu configurator
   containers.podman.podman_container:
@@ -31,5 +32,5 @@
 # if this times out, that means it was unable to write secrets to vault
 # check the logs `podman logs -f config-init` to figure out why
 - name: wait for config-init to generate config
-  wait_for:
+  ansible.builtin.wait_for:
     path: /data/gluu-config/secret.json

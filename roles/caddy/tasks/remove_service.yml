@@ -1,6 +1,6 @@
 ---
 - name: disable caddy config
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: "{{ caddy_config_location }}"
     marker: "# {mark} ANSIBLE MANAGED {{ service }}"
     state: absent

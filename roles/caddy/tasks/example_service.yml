@@ -1,17 +1,17 @@
 ---
 - name: ensure /data/caddy exists
-  file:
+  ansible.builtin.file:
     path: /data/caddy
     owner: root
     group: root
     mode: 0755
     state: directory
 - name: "install unzip"
-  package:
+  ansible.builtin.package:
     name: "unzip"
     state: "present"
 - name: pull latest site
-  unarchive:
+  ansible.builtin.unarchive:
     src: https://nightly.link/guppy0130/website/workflows/main/main/_site.zip
     dest: /data/caddy
     remote_src: true

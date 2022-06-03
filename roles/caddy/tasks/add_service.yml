@@ -1,6 +1,6 @@
 ---
 - name: setup caddy config
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: "{{ caddy_config_location }}"
     marker: "# {mark} ANSIBLE MANAGED {{ service }}"
     block: "{{ caddyfile_block }}"

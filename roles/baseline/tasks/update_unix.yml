@@ -1,5 +1,5 @@
 ---
 - name: update everything, except for filesystem
-  package:
+  ansible.builtin.package:
     name: "*"
     state: latest # noqa package-latest I think I know what I'm doing

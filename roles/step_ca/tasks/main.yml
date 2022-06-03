@@ -5,24 +5,24 @@
     state: present
 
 - name: ensure step-ca data directory exists
-  file:
+  ansible.builtin.file:
     path: /data/step-ca/
     state: directory
     mode: 0777
 
 - name: check step-ca env file
-  stat:
+  ansible.builtin.stat:
     path: /data/step-ca/.env
   register: step_ca_env
 
 - name: generate admin token, root/intermediate cert + install certs
   block:
     - name: generate step-ca admin token
-      set_fact:
+      ansible.builtin.set_fact:
         step_ca_admin_token: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters') }}"
 
     - name: write step-ca password
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: /data/step-ca/.env
         line: "{{ step_ca_admin_token }}"
         create: true
@@ -44,18 +44,18 @@
           - /data/step-ca/:/home/step/:Z
 
     - name: wait for certs to be generated
-      wait_for:
+      ansible.builtin.wait_for:
         path: /data/step-ca/certs/root_ca.crt
 
   when: not step_ca_env.stat.exists
 
 - name: determine if certs were generated
-  stat:
+  ansible.builtin.stat:
     path: /data/step-ca/certs/root_ca.crt
   register: root_ca_cert
 
 - name: assert certs were generated
-  assert:
+  ansible.builtin.assert:
     that:
       - root_ca_cert.stat.exists
 
@@ -74,7 +74,7 @@
       - /data/step-ca/:/home/step/:Z
 
 - name: check to see if systemd service file exists already
-  stat:
+  ansible.builtin.stat:
     path: /etc/systemd/system/container-step-ca.service
   register: step_ca_service
 
@@ -96,7 +96,7 @@
       register: step_ca_command_result
 
     - name: generate systemd service
-      shell:
+      ansible.builtin.shell:
         cmd: >-
           podman generate systemd --name step-ca >
           /etc/systemd/system/container-step-ca.service
@@ -105,7 +105,7 @@
         - step_ca_command_result.changed
 
     - name: stop step-ca so systemd can take over
-      command: podman container stop step-ca
+      ansible.builtin.command: podman container stop step-ca
       when:
         - step_ca_command_result.changed
   when: not step_ca_service.stat.exists
@@ -113,7 +113,7 @@
 # restart because otherwise badger messes up, and bonus is we restart reverse
 # proxy for new root certs
 - name: start systemd container-step-ca service
-  service:
+  ansible.builtin.service:
     name: container-step-ca
     state: restarted
     enabled: true

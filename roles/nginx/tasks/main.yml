@@ -1,6 +1,6 @@
 ---
 - name: add nginx-mainline repo
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: nginx-mainline
     description: nginx mainline repo
     baseurl: http://nginx.org/packages/mainline/centos/$releasever/$basearch/
@@ -9,18 +9,18 @@
     gpgkey: https://nginx.org/keys/nginx_signing.key
 
 - name: install nginx
-  package:
+  ansible.builtin.package:
     name: nginx
     state: latest # noqa package-latest usually always stable
 
 - name: set nginx.conf in /etc/nginx/
-  copy:
+  ansible.builtin.copy:
     src: nginx.conf
     dest: /etc/nginx/nginx.conf
     mode: 0644
 
 - name: enable nginx
-  systemd:
+  ansible.builtin.systemd:
     name: nginx
     state: started
     enabled: true
