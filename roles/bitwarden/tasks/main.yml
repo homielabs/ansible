@@ -54,7 +54,7 @@
       - /data/bitwarden/:/data/:Z
     cmd_args:
       - "--env-file=/data/bitwarden/.env"
-    healthcheck: "curl localhost:{{ bw_net_port }}/alive"
+    healthcheck: "curl localhost:80/alive"
   register: bitwarden_command_result
   when: not bitwarden_service.stat.exists
 

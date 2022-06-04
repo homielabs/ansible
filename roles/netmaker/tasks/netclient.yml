@@ -1,0 +1,12 @@
+---
+- name: "setup netclient directories"
+  ansible.builtin.file:
+    path: "/etc/netclient"
+    state: "directory"
+    mode: "0755"
+
+- name: "get netclient"
+  ansible.builtin.get_url:
+    url: "https://github.com/gravitl/netmaker/releases/download/{{ netmaker_version }}/netclient"
+    dest: "/etc/netclient/netclient"
+    mode: "0755"

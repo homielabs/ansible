@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   author: "guppy0130"
-  description: "Deploy Bitwarden with Docker"
+  description: "Deploy netmaker"
   license: "GPLv3"
   min_ansible_version: "2.9"
 dependencies:

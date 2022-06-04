@@ -1,0 +1,10 @@
+---
+netmaker_version: "v0.14.2"
+service: "netmaker"
+netmaker_ui_container: "docker.io/gravitl/netmaker-ui:{{ netmaker_version }}"
+netmaker_environments:
+  - netmaker_server: "default"
+    config:
+      host: "api.{{ service }}.{{ domain }}"
+      apiport: "8081"
+      allowedorigin: "https://dashboard.netmaker.inthemainfra.me"

@@ -1,0 +1,13 @@
+[Unit]
+Description=Netmaker Server
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+WorkingDirectory=/etc/netmaker
+ExecStart=/etc/netmaker/netmaker -c /etc/netmaker/config/environments/%i.yml
+Environment="TELEMETRY=off"
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,47 @@
+---
+- name: "setup netmaker folders in /etc/netmaker"
+  ansible.builtin.file:
+    path: "/etc/netmaker/config/environments"
+    state: "directory"
+    mode: "0755"
+
+- name: "get netmaker server"
+  ansible.builtin.get_url:
+    url: "https://github.com/gravitl/netmaker/releases/download/{{ netmaker_version }}/netmaker"
+    dest: "/etc/netmaker/netmaker"
+    mode: "0755"
+
+- name: "template config"
+  ansible.builtin.template:
+    src: "config.yml.j2"
+    dest: "/etc/netmaker/config/environments/{{ item.netmaker_server }}.yml"
+    mode: "0644"
+  loop: "{{ netmaker_environments }}"
+
+- name: "template service"
+  ansible.builtin.template:
+    src: "netmaker.service.j2"
+    dest: "/etc/systemd/system/netmaker@.service"
+    mode: "0644"
+
+- name: "setup netmaker-ui"
+  include_tasks: "netmaker-ui.yml"
+
+- name: "setup netclient"
+  include_tasks: "netclient.yml"
+
+- name: add service to reverse proxy
+  include_tasks:
+    file: roles/caddy/tasks/add_service.yml
+    apply:
+      vars:
+        caddyfile_block: |-
+          api.netmaker.{{ domain }} {
+            reverse_proxy localhost:8081
+          }
+          dashboard.netmaker.{{ domain }} {
+            reverse_proxy /* localhost:8082
+          }
+          grpc.netmaker.{{ domain }} {
+            reverse_proxy localhost:50051
+          }
