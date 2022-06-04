@@ -5,6 +5,10 @@ netmaker_ui_container: "docker.io/gravitl/netmaker-ui:{{ netmaker_version }}"
 netmaker_environments:
   - netmaker_server: "default"
     config:
-      host: "api.{{ service }}.{{ domain }}"
+      apihost: "api.{{ service }}.{{ domain }}"
       apiport: "8081"
-      allowedorigin: "https://dashboard.netmaker.inthemainfra.me"
+      masterkey: "{{ lookup('password', '/dev/null length=15 chars=ascii_letters') }}"
+      allowedorigin: "*"
+      restbackend: true
+      agentbackend: true
+      dnsmode: "on"

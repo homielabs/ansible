@@ -1,8 +1,1 @@
-server:
-  apihost: "{{ item.config.host | default('127.0.0.1') }}"
-  apiport: "{{ item.config.apiport | default('8081') }}"
-  masterkey: "{{ item.config.masterkey | default(lookup('password', '/dev/null length=15 chars=ascii_letters')) }}"
-  allowedorigin: "{{ item.config.allowedorigin | default('*') }}"
-  restbackend: "{{ item.config.restbackend | default(true) }}"
-  agentbackend: "{{ item.config.agentbackend | default(true) }}"
-  dnsmode: "{{ item.config.dnsmode | default('on') }}"
+{{ {'server': item.config} | to_nice_yaml(indent=2) }}
