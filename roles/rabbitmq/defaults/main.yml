@@ -1,0 +1,2 @@
+---
+rabbitmq_container: "docker.io/library/rabbitmq:alpine"
